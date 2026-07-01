@@ -1,0 +1,2624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EPC Maturity Management Platform · V14</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #0d1117; --bg-card: #161b22; --bg-el: #1c2130; --bd: #30363d;
+  --tx: #e6edf3; --tx2: #8b949e; --tx3: #6e7681;
+  --own: #3b82f6; --own-a: rgba(59,130,246,0.15); --own-b: rgba(59,130,246,0.8);
+  --pmc: #f59e0b; --pmc-a: rgba(245,158,11,0.15); --pmc-b: rgba(245,158,11,0.8);
+  --epc: #10b981; --epc-a: rgba(16,185,129,0.15); --epc-b: rgba(16,185,129,0.8);
+  --tgt: #6366f1; --tgt-a: rgba(99,102,241,0.1); --tgt-b: rgba(99,102,241,0.7);
+  --con: #a855f7; --con-a: rgba(168,85,247,0.12);
+  --red: #ef4444; --red-a: rgba(239,68,68,0.15);
+  --amb: #f59e0b; --amb-a: rgba(245,158,11,0.15);
+  --grn: #22c55e; --grn-a: rgba(34,197,94,0.15);
+  --acc: #58a6ff;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--tx);display:flex;height:100vh;overflow:hidden}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px}
+
+/* SIDEBAR */
+.sb{width:210px;min-width:210px;background:#0a0e14;border-right:1px solid var(--bd);display:flex;flex-direction:column}
+.sb-logo{padding:18px 16px;border-bottom:1px solid var(--bd)}
+.sb-logo-t{font-size:12px;font-weight:800;letter-spacing:2px;color:var(--acc);text-transform:uppercase}
+.sb-logo-s{font-size:9px;color:var(--tx3);margin-top:2px}
+.sb-proj{padding:10px 16px;border-bottom:1px solid var(--bd);background:rgba(88,166,255,0.04)}
+.sb-proj-n{font-size:11px;font-weight:600;color:var(--tx)}
+.sb-proj-c{font-size:9px;color:var(--tx3);margin-top:2px}
+.sb-nav{flex:1;padding:6px 0;overflow-y:auto}
+.nb-sec{font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx3);text-transform:uppercase;padding:12px 14px 4px}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 14px;cursor:pointer;border-left:3px solid transparent;font-size:11px;color:var(--tx2);transition:all .15s}
+.ni:hover{background:rgba(255,255,255,0.04);color:var(--tx)}
+.ni.active{background:rgba(88,166,255,0.1);color:var(--acc);border-left-color:var(--acc)}
+.ni .ico{font-size:13px;width:16px;text-align:center}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:50px;background:#0a0e14;border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 18px;gap:14px;flex-shrink:0}
+.tb-title{font-size:13px;font-weight:600;flex:1}
+.bdg{font-size:9px;padding:2px 8px;border-radius:3px;font-weight:700;letter-spacing:.5px}
+.bdg-r{background:var(--red-a);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.bdg-a{background:var(--amb-a);color:var(--amb);border:1px solid rgba(245,158,11,.3)}
+.bdg-g{background:var(--grn-a);color:var(--grn);border:1px solid rgba(34,197,94,.3)}
+.bdg-b{background:rgba(88,166,255,.12);color:var(--acc);border:1px solid rgba(88,166,255,.3)}
+.ca{flex:1;overflow-y:auto;padding:14px}
+.pg{display:none}
+.pg.act{display:block}
+
+/* KPI STRIP */
+.kpi{display:grid;gap:10px;margin-bottom:14px}
+.kpi5{grid-template-columns:repeat(5,1fr)}
+.kpi4{grid-template-columns:repeat(4,1fr)}
+.kpi3{grid-template-columns:repeat(3,1fr)}
+.kc{background:var(--bg-card);border:1px solid var(--bd);border-radius:8px;padding:12px 14px;position:relative;overflow:hidden}
+.kc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.kc.own::before{background:var(--own)} .kc.pmc::before{background:var(--pmc)}
+.kc.epc::before{background:var(--epc)} .kc.psp::before{background:var(--con)}
+.kc.tgt::before{background:var(--tgt)} .kc.red::before{background:var(--red)}
+.kl{font-size:9px;font-weight:700;letter-spacing:1px;color:var(--tx3);text-transform:uppercase;margin-bottom:5px}
+.kv{font-size:24px;font-weight:700;letter-spacing:-.5px;line-height:1}
+.ks{font-size:9px;color:var(--tx3);margin-top:4px}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.g21{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+.g12{display:grid;grid-template-columns:1fr 2fr;gap:12px}
+.g-rad{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.mb{margin-bottom:12px}
+
+/* CARDS */
+.card{background:var(--bg-card);border:1px solid var(--bd);border-radius:8px;overflow:hidden}
+.ch{padding:11px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ct{font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--tx);text-transform:uppercase}
+.cb{padding:14px}
+.cb0{padding:0}
+
+/* STATUS CARDS */
+.sg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.sc2{background:var(--bg-card);border-radius:6px;padding:10px 12px;border:1px solid var(--bd);border-left:3px solid}
+.sc2.crit{border-left-color:var(--red)} .sc2.warn{border-left-color:var(--amb)} .sc2.ok{border-left-color:var(--grn)}
+.sc-dom{font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--tx3);margin-bottom:3px}
+.sc-nm{font-size:11px;font-weight:600;color:var(--tx);margin-bottom:5px;line-height:1.3}
+.sc-row{display:flex;gap:6px;margin-top:4px}
+.sc-tag{font-size:9px;font-weight:600;padding:1px 5px;border-radius:3px}
+.own-t{background:var(--own-a);color:var(--own)} .pmc-t{background:var(--pmc-a);color:var(--pmc)} .epc-t{background:var(--epc-a);color:var(--epc)}
+
+/* CHART WRAP */
+.cw{position:relative;width:100%}
+.h200{height:200px} .h250{height:250px} .h280{height:280px}
+.h300{height:300px} .h320{height:320px} .h350{height:350px}
+.rad-h{height:265px}
+
+/* LEGEND */
+.leg{display:flex;gap:14px;align-items:center}
+.li{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--tx2)}
+.ld{width:9px;height:9px;border-radius:50%}
+
+/* SCORECARD BARS */
+.sct{width:100%}
+.scr{display:grid;grid-template-columns:130px 1fr 36px;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.scr-n{font-size:10px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scr-b{display:flex;flex-direction:column;gap:3px}
+.scr-br{display:flex;align-items:center;gap:5px;font-size:8px}
+.scr-bl{width:26px;color:var(--tx3);font-weight:600}
+.scr-bt{flex:1;height:5px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden}
+.scr-bf{height:100%;border-radius:3px;transition:width .5s}
+.scr-bf.own{background:var(--own)} .scr-bf.pmc{background:var(--pmc)} .scr-bf.epc{background:var(--epc)}
+.scr-v{font-size:10px;font-weight:600;color:var(--tx2);text-align:right}
+
+/* HEAT MAP */
+.hm{width:100%;border-collapse:collapse}
+.hm th{font-size:8px;font-weight:700;letter-spacing:.5px;color:var(--tx3);text-transform:uppercase;padding:5px 6px;text-align:center}
+.hm td{padding:4px 5px;text-align:center;border:1px solid rgba(255,255,255,.02)}
+.hm .hn{text-align:left;font-size:9px;color:var(--tx2);white-space:nowrap;padding-right:10px}
+.hc{border-radius:3px;padding:3px 6px;font-size:9px;font-weight:700;display:inline-block}
+.hc1{background:rgba(239,68,68,.25);color:#fca5a5}
+.hc2{background:rgba(245,158,11,.25);color:#fcd34d}
+.hc3{background:rgba(99,102,241,.25);color:#a5b4fc}
+.hc4{background:rgba(16,185,129,.25);color:#6ee7b7}
+.hc5{background:rgba(34,197,94,.25);color:#86efac}
+
+/* PSP GAUGE */
+.gauge-wrap{display:flex;flex-direction:column;align-items:center;padding:10px 0}
+.gauge-canvas-wrap{position:relative;width:260px;height:140px}
+.gauge-val{position:absolute;bottom:0;left:50%;transform:translateX(-50%);text-align:center}
+.gauge-num{font-size:28px;font-weight:800;line-height:1}
+.gauge-lbl{font-size:9px;color:var(--tx3);margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+.psp-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.psp-bar-lbl{font-size:10px;color:var(--tx2);width:140px;flex-shrink:0}
+.psp-bar-track{flex:1;height:5px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden}
+.psp-bar-fill{height:100%;border-radius:3px}
+.psp-bar-val{font-size:10px;font-weight:700;width:32px;text-align:right}
+
+/* LIVE CONTROL TABLE */
+.lct{width:100%;border-collapse:collapse;font-size:11px}
+.lct th{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);padding:7px 8px;text-align:center;border-bottom:1px solid var(--bd)}
+.lct td{padding:5px 7px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle}
+.lct .cn{font-size:10px;color:var(--tx2)}
+.lct .dn{font-size:8px;color:var(--tx3)}
+.ss{background:var(--bg-el);border:1px solid var(--bd);border-radius:4px;color:var(--tx);font-size:11px;font-weight:700;padding:2px 4px;width:52px;text-align:center;cursor:pointer;transition:border-color .15s}
+.ss:focus{outline:none} .ss.own:focus{border-color:var(--own)} .ss.pmc:focus{border-color:var(--pmc)} .ss.epc:focus{border-color:var(--epc)}
+.conc{font-size:11px;font-weight:700;color:var(--con);text-align:center}
+.gapc{font-size:10px;font-weight:700;text-align:center}
+.gapc.crit{color:var(--red)} .gapc.high{color:var(--amb)} .gapc.med{color:#a5b4fc} .gapc.low{color:var(--grn)}
+
+/* GAP TABLE */
+.gt{width:100%;border-collapse:collapse;font-size:11px}
+.gt th{padding:7px 10px;text-align:left;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);border-bottom:1px solid var(--bd)}
+.gt td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle}
+.gt tr:hover{background:rgba(255,255,255,.02)}
+.ptag{display:inline-block;padding:2px 6px;border-radius:3px;font-size:8px;font-weight:700;letter-spacing:.5px}
+.ptag.crit{background:rgba(239,68,68,.2);color:var(--red)}
+.ptag.high{background:rgba(245,158,11,.2);color:var(--amb)}
+.ptag.med{background:rgba(99,102,241,.2);color:#a5b4fc}
+.ptag.low{background:rgba(34,197,94,.2);color:var(--grn)}
+
+/* RISK */
+.ri{padding:10px 12px;border-radius:6px;border:1px solid;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start}
+.ri.hi{border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.05)}
+.ri.md{border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.05)}
+.ri.lo{border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.05)}
+.ri-icon{font-size:16px;flex-shrink:0}
+.ri-ttl{font-size:11px;font-weight:600;color:var(--tx);margin-bottom:3px}
+.ri-desc{font-size:10px;color:var(--tx2);line-height:1.4}
+
+/* TIMELINE */
+.tl-phases{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:10px}
+.tl-ph{background:var(--bg-el);border-radius:6px;padding:8px 10px;border:1px solid var(--bd)}
+.tl-ph.done{border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.04)}
+.tl-ph.curr{border-color:rgba(88,166,255,.5);background:rgba(88,166,255,.06)}
+.tl-ph.next{opacity:.55}
+.tl-num{font-size:8px;font-weight:700;color:var(--tx3);letter-spacing:1px;margin-bottom:3px}
+.tl-nm{font-size:10px;font-weight:600;color:var(--tx);line-height:1.3}
+.tl-dt{font-size:8px;color:var(--tx3);margin-top:3px}
+.tl-bar{height:2px;background:linear-gradient(to right,var(--grn) 38%,var(--acc) 38%,rgba(255,255,255,.08) 55%);margin:10px 0;border-radius:1px}
+
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid var(--bd);margin-bottom:14px}
+.tbb{padding:7px 14px;font-size:10px;font-weight:700;color:var(--tx3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;text-transform:uppercase;letter-spacing:.5px;background:none;border-top:none;border-left:none;border-right:none}
+.tbb:hover{color:var(--tx2)} .tbb.act{color:var(--acc);border-bottom-color:var(--acc)}
+
+/* MISC */
+.btn{padding:5px 10px;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid;transition:all .15s;letter-spacing:.3px}
+.btn-b{background:var(--own-a);color:var(--own);border-color:rgba(59,130,246,.4)}
+.btn-b:hover{background:rgba(59,130,246,.25)}
+.prbar{height:5px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden;margin-top:3px}
+.prfill{height:100%;border-radius:3px}
+
+/* WEIGHT PANEL */
+
+.mode-toggle{display:flex;background:rgba(255,255,255,.05);border:1px solid var(--bd);border-radius:6px;overflow:hidden;flex-shrink:0}
+.mode-btn{padding:4px 10px;font-size:9px;font-weight:700;letter-spacing:.4px;cursor:pointer;border:none;background:transparent;color:var(--tx3);transition:all .2s}
+.mode-btn.act{background:var(--epc);color:#fff}
+.epc-only-bar{display:none;background:rgba(59,130,246,.12);border-bottom:1px solid rgba(59,130,246,.4);padding:4px 18px;font-size:10px;font-weight:700;color:var(--epc);letter-spacing:.05em;text-align:center}
+.epc-only-bar.show{display:block}
+.wp-btn{background:rgba(255,255,255,.07);border:1px solid var(--bd);border-radius:5px;color:var(--tx2);font-size:10px;font-weight:600;padding:4px 10px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap}
+.wp-btn:hover,.wp-btn.on{background:rgba(88,166,255,.12);color:var(--acc);border-color:rgba(88,166,255,.3)}
+.wp-panel{position:fixed;top:54px;right:14px;background:#0f1420;border:1px solid var(--bd);border-radius:8px;padding:16px 18px;width:290px;z-index:500;box-shadow:0 8px 32px rgba(0,0,0,.6);display:none}
+.wp-panel.open{display:block}
+.wp-row{margin-bottom:11px}
+.wp-lbl{display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px}
+.wp-slider{width:100%;height:4px;border-radius:2px;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none}
+.wp-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;cursor:pointer}
+.wp-total{text-align:center;font-size:11px;color:var(--tx2);margin-top:8px;padding-top:8px;border-top:1px solid var(--bd)}
+.wp-warn{font-size:9px;color:var(--red);text-align:center;margin-top:4px;display:none}
+
+/* DRILL-DOWN MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-bg.open{display:flex}
+.modal-box{background:#0f1420;border:1px solid var(--bd);border-radius:10px;width:700px;max-width:95vw;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.7)}
+.modal-hd{padding:14px 18px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;position:sticky;top:0;background:#0f1420;z-index:1}
+.modal-ttl{font-size:13px;font-weight:700;color:var(--tx);flex:1}
+.modal-cls{background:none;border:none;color:var(--tx3);font-size:18px;cursor:pointer;padding:2px 6px;border-radius:4px;line-height:1}
+.modal-cls:hover{color:var(--tx);background:rgba(255,255,255,.06)}
+.modal-bd{padding:18px}
+.lvl-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}
+.lc{border-radius:6px;padding:9px;border:1px solid}
+.lc.l1{border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.07)}
+.lc.l2{border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.07)}
+.lc.l3{border-color:rgba(99,102,241,.35);background:rgba(99,102,241,.07)}
+.lc.l4{border-color:rgba(16,185,129,.35);background:rgba(16,185,129,.07)}
+.lc.l5{border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.07)}
+.lc-num{font-size:14px;font-weight:800;margin-bottom:3px}
+.lc-nm{font-size:10px;font-weight:700;margin-bottom:4px}
+.lc-desc{font-size:9px;line-height:1.5;color:var(--tx2)}
+.ev-inp{width:100%;background:var(--bg-el);border:1px solid var(--bd);border-radius:6px;color:var(--tx);font-size:11px;padding:10px;resize:vertical;min-height:72px;font-family:inherit}
+.ev-inp:focus{outline:none;border-color:var(--acc)}
+
+/* ACTION TRACKER */
+.at-hdr{display:grid;grid-template-columns:1fr 95px 115px 120px 36px;gap:8px;padding:8px 12px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);border-bottom:1px solid var(--bd)}
+.at-row{display:grid;grid-template-columns:1fr 95px 115px 120px 36px;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s}
+.at-row:hover{background:rgba(255,255,255,.02)}
+.at-sel{background:var(--bg-el);border:1px solid var(--bd);border-radius:4px;color:var(--tx);font-size:10px;padding:3px 5px;cursor:pointer;width:100%}
+.at-inp{background:var(--bg-el);border:1px solid var(--bd);border-radius:4px;color:var(--tx);font-size:10px;padding:3px 7px;width:100%}
+.at-sel:focus,.at-inp:focus{outline:none;border-color:var(--acc)}
+.at-del{background:none;border:none;color:var(--tx3);font-size:14px;cursor:pointer;padding:2px 4px;border-radius:3px;line-height:1}
+.at-del:hover{color:var(--red);background:rgba(239,68,68,.1)}
+.status-open{color:var(--red);font-weight:700}
+.status-wip{color:var(--amb);font-weight:700}
+.status-done{color:var(--grn);font-weight:700}
+
+/* EXP BUTTONS */
+.exp-btn{background:rgba(255,255,255,.05);border:1px solid var(--bd);border-radius:4px;color:var(--tx3);font-size:9px;font-weight:600;padding:3px 8px;cursor:pointer;letter-spacing:.3px;transition:all .15s;display:inline-flex;align-items:center;gap:4px}
+.exp-btn:hover{background:rgba(255,255,255,.1);color:var(--tx)}
+
+/* PORTFOLIO */
+.port-card{background:var(--bg-el);border:1px solid var(--bd);border-radius:8px;padding:12px 14px;position:relative;overflow:hidden}
+.port-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+
+/* PRINT */
+@media print{
+  .sb,.topbar,.wp-panel,.modal-bg{display:none!important}
+  .main{overflow:visible!important}
+  .ca{overflow:visible!important;padding:0}
+  .pg{display:block!important;page-break-after:always}
+  body{background:#fff!important;color:#000!important;display:block}
+  .card{border:1px solid #ccc!important;break-inside:avoid}
+  .card *,.ch,.cb,.ct{color:#111!important;background:#fff!important}
+}
+
+
+/* ── ASSESSMENT PHASE BAR ── */
+.ph-btn{padding:4px 9px;border-radius:5px;border:1px solid #30363d;background:#1c2230;color:#8b949e;cursor:pointer;font-size:10px;font-weight:600;transition:.15s}
+.ph-btn:hover{border-color:var(--acc);color:var(--acc)}
+.ph-btn.ph-active{border-color:var(--grn)!important;background:rgba(34,197,94,.12)!important;color:var(--grn)!important;font-weight:800}
+.ph-btn.ph-past{border-color:rgba(88,166,255,.3);background:rgba(88,166,255,.06);color:var(--acc)}
+/* Question cards in assessment */
+.q-ass-card{border-radius:7px;border-left:3px solid;padding:9px 12px;margin-bottom:5px;display:flex;align-items:flex-start;gap:9px;font-size:11px}
+.q-ass-card.st-active{border-color:#22c55e;background:rgba(34,197,94,.07)}
+.q-ass-card.st-future{border-color:#f59e0b;background:rgba(245,158,11,.07);opacity:.75}
+.q-ass-card.st-excluded{border-color:#ef4444;background:rgba(239,68,68,.06);opacity:.45;display:none}
+.q-ass-id{font-size:9px;font-weight:700;color:#8b949e;min-width:34px;padding-top:1px;flex-shrink:0}
+.q-ass-body{flex:1;line-height:1.45;color:#c9d1d9}
+.q-ass-tags{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.q-ass-tag{font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;border:1px solid}
+.qtag-dom{background:rgba(88,166,255,.1);color:#90b8f8;border-color:rgba(88,166,255,.25)}
+.qtag-ph{background:rgba(168,85,247,.1);color:#c084fc;border-color:rgba(168,85,247,.25)}
+.qtag-own{background:rgba(59,130,246,.1);color:#7db4f8;border-color:rgba(59,130,246,.25)}
+.qtag-epc{background:rgba(16,185,129,.1);color:#34d399;border-color:rgba(16,185,129,.25)}
+.q-ass-status{flex-shrink:0;font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;border:1px solid;letter-spacing:.3px;align-self:flex-start;margin-top:1px}
+.qst-active{background:rgba(34,197,94,.12);color:#22c55e;border-color:rgba(34,197,94,.3)}
+.qst-future{background:rgba(245,158,11,.12);color:#f59e0b;border-color:rgba(245,158,11,.3)}
+.cap-q-group{background:#161b22;border:1px solid #30363d;border-radius:9px;margin-bottom:10px;overflow:hidden}
+.cap-q-hdr{padding:10px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.cap-q-hdr:hover{background:#1c2230}
+.cap-q-hdr-title{font-size:12px;font-weight:700;color:#e6edf3;flex:1}
+.cap-q-hdr-id{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:rgba(88,166,255,.15);color:var(--acc);border:1px solid rgba(88,166,255,.3)}
+.cap-q-counts{display:flex;gap:5px}
+.cqc{font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px}
+.cqc-a{background:rgba(34,197,94,.15);color:#22c55e}
+.cqc-f{background:rgba(245,158,11,.15);color:#f59e0b}
+.cqc-e{background:rgba(239,68,68,.12);color:#ef4444}
+.cap-q-body{padding:6px 8px;border-top:1px solid #30363d}
+.cap-score-row{display:flex;align-items:center;gap:8px;padding:6px 8px;background:#0d1117;border-radius:5px;margin-bottom:6px;font-size:10px;color:#8b949e}
+.cap-score-row select.ss{background:#1c2230;border:1px solid #30363d;color:#e6edf3;padding:2px 4px;border-radius:4px;font-size:10px;cursor:pointer}
+
+  /* Validation badges */
+  .val-badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:600;border-radius:3px;padding:1px 5px;cursor:pointer}
+  .val-draft{background:rgba(110,118,129,.15);color:#6e7681;border:1px solid #30363d}
+  .val-pending{background:rgba(59,130,246,.15);color:#3b82f6;border:1px solid rgba(59,130,246,.3)}
+  .val-ai{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+  .val-done{background:rgba(63,185,80,.15);color:#3fb950;border:1px solid rgba(63,185,80,.3)}
+  #evd-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center}
+
+  </style>
+</head>
+<body>
+
+<!-- DRILL-DOWN MODAL -->
+<div class="modal-bg" id="cap-modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <div class="modal-ttl" id="modal-ttl">Capability Detail</div>
+      <button class="modal-cls" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-bd" id="modal-bd"></div>
+  </div>
+</div>
+
+<!-- WEIGHT PANEL -->
+<div class="wp-panel" id="wp-panel">
+  <div style="font-size:11px;font-weight:700;color:var(--tx);margin-bottom:14px">⚖ Assessment Weight Controls</div>
+  <div class="wp-row">
+    <div class="wp-lbl"><span style="color:var(--own);font-weight:700">● Owner (OWN)</span><span style="color:var(--own);font-weight:800" id="wv-own">35%</span></div>
+    <input type="range" class="wp-slider" id="ws-own" min="5" max="80" value="35" oninput="onWt('own',+this.value)" style="accent-color:var(--own)">
+  </div>
+  <div class="wp-row">
+    <div class="wp-lbl"><span style="color:var(--pmc);font-weight:700">● PMC Consultant</span><span style="color:var(--pmc);font-weight:800" id="wv-pmc">40%</span></div>
+    <input type="range" class="wp-slider" id="ws-pmc" min="5" max="80" value="40" oninput="onWt('pmc',+this.value)" style="accent-color:var(--pmc)">
+  </div>
+  <div class="wp-row">
+    <div class="wp-lbl"><span style="color:var(--epc);font-weight:700">● EPC Contractor</span><span style="color:var(--epc);font-weight:800" id="wv-epc">25%</span></div>
+    <input type="range" class="wp-slider" id="ws-epc" min="5" max="80" value="25" oninput="onWt('epc',+this.value)" style="accent-color:var(--epc)">
+  </div>
+  <div class="wp-warn" id="wp-warn">⚠ Weights must total 100%</div>
+  <div class="wp-total">Total: <strong id="wp-total" style="color:var(--tx)">100%</strong></div>
+  <div style="display:flex;gap:8px;margin-top:12px">
+    <button class="btn btn-b" style="flex:1;font-size:10px" onclick="resetWts()">↺ Reset</button>
+    <button class="btn btn-b" style="flex:1;font-size:10px;background:rgba(88,166,255,.15)" onclick="applyWts()">✓ Apply</button>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<nav class="sb">
+  <div class="sb-logo">
+    <div class="sb-logo-t">EPC·MMP</div>
+    <div class="sb-logo-s">Maturity Management Platform V14</div>
+  </div>
+  <div class="sb-proj">
+    <div class="sb-proj-n">Jubail Refinery Expansion</div>
+    <div class="sb-proj-c">PRJ-001 · EPC Limited · Phase 2 · 2026-Q2</div>
+  </div>
+  <div class="sb-nav">
+    <div class="nb-sec">Overview</div>
+    <div class="ni active" data-pg="dash"><span class="ico">⬛</span> Executive Dashboard</div>
+    <div class="ni" data-pg="mat"><span class="ico">◈</span> Maturity Analysis</div>
+    <div class="nb-sec">Assessment</div>
+    <div class="ni" data-pg="ass"><span class="ico">✎</span> Live Assessment</div>
+    <div class="ni" data-pg="sc"><span class="ico">≡</span> Capacity Scorecard</div>
+    <div class="nb-sec">Analytics</div>
+    <div class="ni" data-pg="gap"><span class="ico">⚡</span> Gap Analysis</div>
+    <div class="ni" data-pg="risk"><span class="ico">⚠</span> Risk Engine</div>
+    <div class="ni" data-pg="rm"><span class="ico">⟶</span> Roadmap</div>
+    <div class="ni" data-pg="hmap"><span class="ico">⊞</span> Heat Map</div>
+    <div class="nb-sec">Intelligence</div>
+    <div class="ni" data-pg="intel"><span class="ico">◎</span> Exec Intelligence</div>
+    <div class="nb-sec">Strategy</div>
+    <div class="ni" data-pg="d72"><span class="ico">⏱</span> Decision Forcing</div>
+    <div class="ni" data-pg="scen"><span class="ico">⇌</span> Scenario Comparison</div>
+    <div class="ni" data-pg="h3"><span class="ico">◐</span> 3-Horizon Roadmap</div>
+    <div class="ni" data-pg="roi"><span class="ico">◉</span> ROI Bubble Map</div>
+    <div class="nb-sec">Governance</div>
+    <div class="ni" data-pg="align"><span class="ico">⇔</span> Stakeholder Alignment</div>
+    <div class="ni" data-pg="act"><span class="ico">✔</span> Action Tracker</div>
+    <div class="ni" data-pg="port"><span class="ico">⊞</span> Portfolio View</div>
+  </div>
+  <div style="padding:12px 14px;border-top:1px solid var(--bd);margin-top:auto"><button onclick="showPerspModal()" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--bd);border-radius:5px;color:var(--tx3);font-size:10px;font-weight:600;padding:7px;cursor:pointer;letter-spacing:.3px">⚙ Change Perspective</button></div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="tb-title" id="pg-title">Executive Dashboard</div>
+    <span id="persp-badge" style="font-size:9px;font-weight:700;letter-spacing:.4px;padding:3px 10px;border-radius:4px;background:rgba(59,130,246,.15);color:var(--epc);border:1px solid rgba(59,130,246,.4);display:none"></span>
+    <span class="bdg bdg-a">CYCLE 2 — IN PROGRESS</span>
+    <span class="bdg bdg-g">EPC Phase 2</span>
+    <span style="font-size:10px;color:var(--tx3)">2026-Q2</span>
+    <div style="display:flex;gap:5px;align-items:center;margin-left:6px;position:relative">
+      <button class="wp-btn" id="wp-toggle" onclick="toggleWP()" title="Adjust perspective weights">⚖ <span id="wp-sum">35/40/25</span></button>
+      <button class="exp-btn" onclick="exportJSON()">⬇ JSON</button>
+      <label class="exp-btn" style="cursor:pointer">⬆ Import<input type="file" accept=".json" style="display:none" onchange="importJSON(this)"></label>
+      <button class="exp-btn" onclick="window.print()">🖨 PDF</button>
+    </div>
+  </div>
+
+  <div class="ca">
+
+  <!-- ══ DASHBOARD ══ -->
+  <div class="pg act" id="pg-dash">
+    <div class="kpi kpi5">
+      <div class="kc own"><div class="kl">OWN Maturity</div><div class="kv" style="color:var(--own)" id="k-own">2.90</div><div class="ks">17 capabilities · avg L3</div></div>
+      <div class="kc pmc"><div class="kl">PMC Assessment</div><div class="kv" style="color:var(--pmc)" id="k-pmc">3.22</div><div class="ks">Consultant view</div></div>
+      <div class="kc epc"><div class="kl">EPC Self-Score</div><div class="kv" style="color:var(--epc)" id="k-epc">2.57</div><div class="ks">Contractor assessment</div></div>
+      <div class="kc psp"><div class="kl">PSP Score</div><div class="kv" style="color:var(--con)" id="k-psp">69%</div><div class="ks">Project Success Predictor</div></div>
+      <div class="kc red"><div class="kl">Avg Gap</div><div class="kv" style="color:var(--red)" id="k-gap">−1.47</div><div class="ks">11 capabilities below L3</div></div>
+    </div>
+    <div class="sg" id="status-grid"></div>
+    <div class="g2 mb">
+      <div class="card"><div class="ch"><span class="ct">Capability Gap · Bubble Map</span><span style="font-size:9px;color:var(--tx3)">size = impact radius</span></div><div class="cb"><div class="cw h280"><canvas id="bubbleChart"></canvas></div></div></div>
+      <div class="card"><div class="ch"><span class="ct">Maturity Trend</span><div class="leg"><div class="li"><div class="ld" style="background:var(--own)"></div>OWN</div><div class="li"><div class="ld" style="background:var(--pmc)"></div>PMC</div><div class="li"><div class="ld" style="background:var(--epc)"></div>EPC</div></div></div><div class="cb"><div class="cw h280"><canvas id="trendChart"></canvas></div></div></div>
+    </div>
+    <div class="g2">
+      <div class="card"><div class="ch"><span class="ct">Priority Action Matrix</span></div><div class="cb cb0" id="pam" style="max-height:260px;overflow-y:auto"></div></div>
+      <div class="card"><div class="ch"><span class="ct">Domain Maturity Overview</span></div><div class="cb"><div class="cw h250"><canvas id="domChart"></canvas></div></div></div>
+    </div>
+  </div>
+
+  <!-- ══ MATURITY ══ -->
+  <div class="pg" id="pg-mat">
+    <div class="kpi kpi5">
+      <div class="kc own"><div class="kl">OWN Avg</div><div class="kv" style="color:var(--own)" id="m-own">—</div><div class="ks">Owner maturity</div></div>
+      <div class="kc pmc"><div class="kl">PMC Avg</div><div class="kv" style="color:var(--pmc)" id="m-pmc">—</div><div class="ks">Consultant view</div></div>
+      <div class="kc epc"><div class="kl">EPC Avg</div><div class="kv" style="color:var(--epc)" id="m-epc">—</div><div class="ks">Self-assessment</div></div>
+      <div class="kc psp"><div class="kl">Consensus</div><div class="kv" style="color:var(--con)" id="m-con">—</div><div class="ks">Triangulated score</div></div>
+      <div class="kc tgt"><div class="kl">Target Avg</div><div class="kv" style="color:var(--tgt)" id="m-tgt">—</div><div class="ks">Program target</div></div>
+    </div>
+    <!-- 4 RADARS -->
+    <div class="g-rad">
+      <div class="card"><div class="ch"><span class="ct">Owner Perspective</span><span class="bdg bdg-b" style="font-size:8px">OWN vs Target</span></div><div class="cb"><div class="cw rad-h"><canvas id="rOwn"></canvas></div></div></div>
+      <div class="card"><div class="ch"><span class="ct">PMC Stakeholder View</span><span class="bdg" style="background:var(--pmc-a);color:var(--pmc);border:1px solid rgba(245,158,11,.3);font-size:8px">PMC vs Target</span></div><div class="cb"><div class="cw rad-h"><canvas id="rPMC"></canvas></div></div></div>
+      <div class="card"><div class="ch"><span class="ct">EPC Stakeholder View</span><span class="bdg" style="background:var(--epc-a);color:var(--epc);border:1px solid rgba(16,185,129,.3);font-size:8px">EPC vs Target</span></div><div class="cb"><div class="cw rad-h"><canvas id="rEPC"></canvas></div></div></div>
+      <div class="card"><div class="ch"><span class="ct">Consolidated View</span><span class="bdg" style="background:var(--con-a);color:var(--con);border:1px solid rgba(168,85,247,.3);font-size:8px">All Perspectives</span></div><div class="cb"><div class="cw rad-h"><canvas id="rCon"></canvas></div></div></div>
+    </div>
+    <!-- SCORECARD + HEATMAP -->
+    <div class="g2 mb">
+      <div class="card">
+        <div class="ch"><span class="ct">Capacity Scorecard</span><div class="leg"><div class="li"><div class="ld" style="background:var(--own)"></div>OWN</div><div class="li"><div class="ld" style="background:var(--pmc)"></div>PMC</div><div class="li"><div class="ld" style="background:var(--epc)"></div>EPC</div></div></div>
+        <div class="cb" style="max-height:340px;overflow-y:auto;padding:10px 14px" id="cap-sc"></div>
+      </div>
+      <div class="card">
+        <div class="ch"><span class="ct">Domain · Phase Heat Map</span><span style="font-size:9px;color:var(--tx3)">L1–L5 scale</span></div>
+        <div class="cb" style="overflow-x:auto" id="hm-wrap"></div>
+      </div>
+    </div>
+    <!-- PSP + LIVE CONTROL -->
+    <div class="g2">
+      <div class="card">
+        <div class="ch"><span class="ct">PSP — Project Success Predictor</span></div>
+        <div class="cb">
+          <div class="gauge-wrap">
+            <div class="gauge-canvas-wrap">
+              <canvas id="pspG" width="260" height="140"></canvas>
+              <div class="gauge-val"><div class="gauge-num" id="psp-n">69%</div><div class="gauge-lbl">Success Probability</div></div>
+            </div>
+          </div>
+          <div id="psp-bars" style="margin-top:4px"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><span class="ct">Assessment — Live Control</span><button class="btn btn-b" onclick="recalc()">↻ Recalculate</button></div>
+        <div class="cb0" style="max-height:330px;overflow-y:auto">
+          <table class="lct" id="lct">
+            <thead><tr>
+              <th style="text-align:left;padding-left:12px">Capability</th>
+              <th style="color:var(--own)">OWN</th>
+              <th style="color:var(--pmc)">PMC</th>
+              <th style="color:var(--epc)">EPC</th>
+              <th style="color:var(--con)">CONS</th>
+              <th>GAP Δ</th>
+            </tr></thead>
+            <tbody id="lct-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ASSESSMENT ══ -->
+  <div class="pg" id="pg-ass">
+    <!-- Phase selector bar -->
+    <div id="ass-phase-bar" style="background:#161b22;border:1px solid #30363d;border-radius:9px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:10px;font-weight:700;color:#8b949e;letter-spacing:.8px;text-transform:uppercase;flex-shrink:0">② Phase Filter</span>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;flex:1" id="phase-btn-group">
+        <button class="ph-btn ph-past" data-ph="PH1" onclick="setProjPhase('PH1')">PH1 Initiation</button>
+        <button class="ph-btn ph-past" data-ph="PH2" onclick="setProjPhase('PH2')">PH2 FEED</button>
+        <button class="ph-btn ph-past" data-ph="PH3" onclick="setProjPhase('PH3')">PH3 Tendering</button>
+        <button class="ph-btn ph-active" data-ph="PH4" onclick="setProjPhase('PH4')">PH4 Execution ●</button>
+        <button class="ph-btn" data-ph="PH5" onclick="setProjPhase('PH5')">PH5 Commission</button>
+        <button class="ph-btn" data-ph="PH6" onclick="setProjPhase('PH6')">PH6 Close-Out</button>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;margin-left:auto">
+        <span style="font-size:10px;color:#8b949e">Mode:</span>
+        <button id="ass-mode-btn" onclick="toggleAssMode()" style="padding:4px 12px;border-radius:5px;border:1px solid #30363d;background:#1c2230;color:#8b949e;cursor:pointer;font-size:10px;font-weight:700;transition:.15s">CAPABILITY</button>
+        <span id="ass-scope-badge" style="font-size:10px;color:#22c55e;font-weight:700"></span>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tbb act" onclick="switchTab('gov',this)">Governance (5)</button>
+      <button class="tbb" onclick="switchTab('con',this)">Controls (7)</button>
+      <button class="tbb" onclick="switchTab('del',this)">Delivery (5)</button>
+    </div>
+    <div id="ass-content"></div>
+  </div>
+
+  <!-- ══ SCORECARD ══ -->
+  <div class="pg" id="pg-sc">
+    <div class="card">
+      <div class="ch"><span class="ct">Capacity Scorecard — All 17 Capabilities</span><div class="leg"><div class="li"><div class="ld" style="background:var(--own)"></div>OWN</div><div class="li"><div class="ld" style="background:var(--pmc)"></div>PMC</div><div class="li"><div class="ld" style="background:var(--epc)"></div>EPC</div><div class="li"><div class="ld" style="background:var(--tgt)"></div>Target</div></div></div>
+      <div class="cb"><div class="cw" style="height:460px"><canvas id="scChart"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- ══ GAP ══ -->
+  <div class="pg" id="pg-gap">
+    <div class="kpi kpi4">
+      <div class="kc red"><div class="kl">Critical Gaps</div><div class="kv" style="color:var(--red)" id="g-crit">—</div><div class="ks">Δ ≥ 2.0 vs target</div></div>
+      <div class="kc"><div class="kl">High Priority</div><div class="kv" style="color:var(--amb)" id="g-high">—</div><div class="ks">Δ 1.5–2.0</div></div>
+      <div class="kc"><div class="kl">Medium</div><div class="kv" style="color:#a5b4fc" id="g-med">—</div><div class="ks">Δ 1.0–1.5</div></div>
+      <div class="kc"><div class="kl">Avg Gap</div><div class="kv" id="g-avg">—</div><div class="ks">Consensus vs Target</div></div>
+    </div>
+    <div class="g2 mb">
+      <div class="card"><div class="ch"><span class="ct">Gap Waterfall</span></div><div class="cb"><div class="cw h280"><canvas id="gWF"></canvas></div></div></div>
+      <div class="card"><div class="ch"><span class="ct">Gap Distribution</span></div><div class="cb"><div class="cw h280"><canvas id="gDist"></canvas></div></div></div>
+    </div>
+    <div class="card"><div class="ch"><span class="ct">Gap Detail Table</span></div><div class="cb0"><table class="gt" id="gap-tbl"></table></div></div>
+  </div>
+
+  <!-- ══ RISK ══ -->
+  <div class="pg" id="pg-risk">
+    <div class="g2">
+      <div class="card"><div class="ch"><span class="ct">Risk Heat Map</span></div><div class="cb"><div class="cw h300"><canvas id="riskRad"></canvas></div></div></div>
+      <div class="card"><div class="ch"><span class="ct">Risk Register</span></div><div class="cb" id="risk-reg"></div></div>
+    </div>
+  </div>
+
+  <!-- ══ ROADMAP ══ -->
+  <div class="pg" id="pg-rm">
+    <div class="card mb">
+      <div class="ch"><span class="ct">Program Roadmap — Assessment to Target State</span><span class="bdg bdg-a">PHASE 2 ACTIVE</span></div>
+      <div class="cb">
+        <div class="tl-bar"></div>
+        <div class="tl-phases" id="tl-phases"></div>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="card"><div class="ch"><span class="ct">Improvement Initiatives</span></div><div class="cb" id="rm-init"></div></div>
+      <div class="card"><div class="ch"><span class="ct">Milestone Targets</span></div><div class="cb"><div class="cw h280"><canvas id="msChart"></canvas></div></div></div>
+    </div>
+  </div>
+
+  <!-- ══ HEAT MAP ══ -->
+  <div class="pg" id="pg-hmap">
+    <div id="hmap-content"></div>
+  </div>
+
+  <!-- ══ INTEL ══ -->
+  <div class="pg" id="pg-intel">
+    <div class="g2 mb">
+      <div class="card"><div class="ch"><span class="ct">Executive Intelligence Summary</span></div><div class="cb" id="intel-sum"></div></div>
+      <div class="card"><div class="ch"><span class="ct">EPEI Readiness Radar</span></div><div class="cb"><div class="cw h280"><canvas id="epeiRad"></canvas></div></div></div>
+    </div>
+    <div class="card"><div class="ch"><span class="ct">Recommended Actions — Priority Order</span></div><div class="cb" id="rec-act"></div></div>
+  </div>
+
+  <!-- ══ DECISION FORCING ══ -->
+  <div class="pg" id="pg-d72">
+    <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.25);border-radius:8px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px">
+      <span style="font-size:22px">⏱</span>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--tx)">Decision Forcing Window — Next 72 Hours</div>
+        <div style="font-size:11px;color:var(--tx2);margin-top:2px">Decisions that <strong>cannot slip</strong> without triggering cascade delays. Each hour of inaction multiplies recovery cost.</div>
+      </div>
+      <div style="margin-left:auto;text-align:center">
+        <div style="font-size:28px;font-weight:800;color:var(--red)" id="d72-counter">72:00</div>
+        <div style="font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px">Hours Remaining</div>
+      </div>
+    </div>
+    <div id="d72-cards" style="display:flex;flex-direction:column;gap:10px"></div>
+    <div class="g2 mb" style="margin-top:14px">
+      <div class="card"><div class="ch"><span class="ct">Decision Impact Matrix</span></div><div class="cb"><div class="cw h260"><canvas id="d72-matrix"></canvas></div></div></div>
+      <div class="card"><div class="ch"><span class="ct">Cost of Delay — Per Decision</span></div><div class="cb"><div class="cw h260"><canvas id="d72-cod"></canvas></div></div></div>
+    </div>
+  </div>
+
+  <!-- ══ SCENARIO COMPARISON ══ -->
+  <div class="pg" id="pg-scen">
+    <div class="kpi kpi3">
+      <div class="kc grn" style="--kc-top:var(--grn)"><div class="kc::before" style="background:var(--grn)"></div><div class="kl">Act Now — Projected Maturity</div><div class="kv" style="color:var(--grn)" id="scen-act">3.85</div><div class="ks">in 12 months · Cycle 3</div></div>
+      <div class="kc red"><div class="kl">Wait 6M — Projected Maturity</div><div class="kv" style="color:var(--red)" id="scen-wait">2.95</div><div class="ks">marginal gain · cost compounding</div></div>
+      <div class="kc tgt"><div class="kl">Opportunity Cost</div><div class="kv" style="color:var(--amb)" id="scen-cost">$4.2M</div><div class="ks">accumulated delay cost</div></div>
+    </div>
+    <div class="g2 mb">
+      <div class="card"><div class="ch"><span class="ct">Maturity Trajectory — Act vs Wait</span></div><div class="cb"><div class="cw h280"><canvas id="scen-traj"></canvas></div></div></div>
+      <div class="card"><div class="ch"><span class="ct">Cumulative Cost Exposure</span></div><div class="cb"><div class="cw h280"><canvas id="scen-cost-chart"></canvas></div></div></div>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="ct">Scenario Dimension Comparison</span></div>
+      <div class="cb" id="scen-table"></div>
+    </div>
+  </div>
+
+  <!-- ══ 3-HORIZON ROADMAP ══ -->
+  <div class="pg" id="pg-h3">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px" id="h3-columns"></div>
+    <div class="g2">
+      <div class="card"><div class="ch"><span class="ct">Capability Maturity Trajectory — By Horizon</span></div><div class="cb"><div class="cw h280"><canvas id="h3-traj"></canvas></div></div></div>
+      <div class="card"><div class="ch"><span class="ct">Horizon Investment Profile</span></div><div class="cb"><div class="cw h280"><canvas id="h3-inv"></canvas></div></div></div>
+    </div>
+  </div>
+
+  <!-- ══ ROI BUBBLE MAP ══ -->
+  <div class="pg" id="pg-roi">
+    <div class="kpi kpi4">
+      <div class="kc own"><div class="kl">Highest ROI Initiative</div><div class="kv" style="color:var(--own);font-size:16px">Change Mgmt</div><div class="ks">ROI 4.2× · $0.8M investment</div></div>
+      <div class="kc psp"><div class="kl">Total Investment Required</div><div class="kv" style="color:var(--con)">$6.4M</div><div class="ks">across 12 initiatives</div></div>
+      <div class="kc grn" style="--grn:var(--grn)"><div class="kl">Projected Value Unlocked</div><div class="kv" style="color:var(--grn)">$22.1M</div><div class="ks">NPV over 24 months</div></div>
+      <div class="kc tgt"><div class="kl">Portfolio Avg ROI</div><div class="kv" style="color:var(--tgt)">3.5×</div><div class="ks">blended return</div></div>
+    </div>
+    <div class="g2 mb">
+      <div class="card">
+        <div class="ch"><span class="ct">ROI vs Effort Bubble Map</span><span style="font-size:9px;color:var(--tx3)">size = investment $M · quadrant = priority</span></div>
+        <div class="cb"><div class="cw h360"><canvas id="roi-bubble"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="ch"><span class="ct">Investment Breakdown by Capability</span></div>
+        <div class="cb"><div class="cw h360"><canvas id="roi-bar"></canvas></div></div>
+      </div>
+    </div>
+    <div class="card"><div class="ch"><span class="ct">Initiative ROI Register</span></div><div class="cb cb0" id="roi-table"></div></div>
+  </div>
+
+
+  <!-- ══ STAKEHOLDER ALIGNMENT ══ -->
+  <div class="pg" id="pg-align">
+    <div style="background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.2);border-radius:8px;padding:11px 16px;margin-bottom:14px;font-size:11px;color:var(--tx2)">
+      <strong style="color:var(--con)">Stakeholder Alignment Analysis</strong> — Measures divergence between OWN, PMC, and EPC scores per capability. High divergence = governance risk: one party has a materially different perception of maturity. Requires structured alignment workshop.
+    </div>
+    <div class="kpi kpi3" id="align-kpis"></div>
+    <div class="g2 mb">
+      <div class="card"><div class="ch"><span class="ct">Divergence by Capability</span><span style="font-size:9px;color:var(--tx3)">|OWN−PMC| + |PMC−EPC| + |OWN−EPC|</span></div><div class="cb"><div class="cw h300"><canvas id="divChart"></canvas></div></div></div>
+      <div class="card"><div class="ch"><span class="ct">Alignment Radar</span><span style="font-size:9px;color:var(--tx3)">1=aligned · 5=highly divergent</span></div><div class="cb"><div class="cw h300"><canvas id="divRad"></canvas></div></div></div>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="ct">Divergence Detail Table</span><span style="font-size:9px;color:var(--tx3)">Click any row to drill down</span></div>
+      <div class="cb0" id="align-tbl"></div>
+    </div>
+  </div>
+
+  <!-- ══ ACTION TRACKER ══ -->
+  <div class="pg" id="pg-act">
+    <div class="kpi kpi4" id="at-kpis"></div>
+    <div class="card mb">
+      <div class="ch">
+        <span class="ct">Action Register</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-b" onclick="addAction()" style="font-size:10px">+ Add Action</button>
+          <button class="exp-btn" onclick="clearDone()">Clear Closed</button>
+          <button class="exp-btn" onclick="saveState()">💾 Save</button>
+        </div>
+      </div>
+      <div class="cb0">
+        <div class="at-hdr"><span>Action</span><span>Priority</span><span>Status</span><span>Owner / Due</span><span></span></div>
+        <div id="at-body"></div>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="card"><div class="ch"><span class="ct">Status Distribution</span></div><div class="cb"><div class="cw h220"><canvas id="at-donut"></canvas></div></div></div>
+      <div class="card"><div class="ch"><span class="ct">Actions by Priority</span></div><div class="cb"><div class="cw h220"><canvas id="at-bar"></canvas></div></div></div>
+    </div>
+  </div>
+
+  <!-- ══ PORTFOLIO VIEW ══ -->
+  <div class="pg" id="pg-port">
+    <div class="kpi kpi4" id="port-kpis"></div>
+    <div class="g2 mb">
+      <div class="card"><div class="ch"><span class="ct">Portfolio Maturity Comparison</span></div><div class="cb"><div class="cw h300"><canvas id="portBar"></canvas></div></div></div>
+      <div class="card"><div class="ch"><span class="ct">PSP & Risk Profile</span></div><div class="cb"><div class="cw h300"><canvas id="portRad"></canvas></div></div></div>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="ct">Project Portfolio Summary</span></div>
+      <div class="cb0" id="port-tbl"></div>
+    </div>
+  </div>
+
+  </div><!-- /ca -->
+</div><!-- /main -->
+
+
+<!-- ══ PERSPECTIVE SETUP MODAL ══ -->
+<div id="persp-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+  <div style="background:#161b22;border:1px solid #30363d;border-radius:14px;padding:36px 40px;max-width:560px;width:90%;box-shadow:0 24px 60px rgba(0,0,0,.6)">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:22px;font-weight:800;color:#e6edf3;letter-spacing:-.3px">Select Your Perspective</div>
+      <div style="font-size:12px;color:#8b949e;margin-top:6px">This defines your role in the assessment. Your view will be tailored accordingly and saved permanently.</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px">
+      <div class="pc-card" onclick="setPerspective('own')" style="background:#1c2130;border:1px solid #30363d;border-radius:10px;padding:20px 16px;cursor:pointer;transition:all .2s;text-align:center" onmouseover="this.style.borderColor='var(--own)'" onmouseout="this.style.borderColor='#30363d'">
+        <div style="font-size:24px;margin-bottom:8px">🏛</div>
+        <div style="font-weight:700;font-size:13px;color:var(--own)">Owner</div>
+        <div style="font-size:10px;color:#6e7681;margin-top:4px">مالك المشروع — يرى تقييمه فقط</div>
+      </div>
+      <div class="pc-card" onclick="setPerspective('pmc')" style="background:#1c2130;border:1px solid #30363d;border-radius:10px;padding:20px 16px;cursor:pointer;transition:all .2s;text-align:center" onmouseover="this.style.borderColor='var(--pmc)'" onmouseout="this.style.borderColor='#30363d'">
+        <div style="font-size:24px;margin-bottom:8px">📋</div>
+        <div style="font-weight:700;font-size:13px;color:var(--pmc)">PMC / Consultant</div>
+        <div style="font-size:10px;color:#6e7681;margin-top:4px">الاستشاري — يرى تقييمه فقط</div>
+      </div>
+      <div class="pc-card" onclick="setPerspective('epc')" style="background:#1c2130;border:1px solid #30363d;border-radius:10px;padding:20px 16px;cursor:pointer;transition:all .2s;text-align:center" onmouseover="this.style.borderColor='var(--epc)'" onmouseout="this.style.borderColor='#30363d'">
+        <div style="font-size:24px;margin-bottom:8px">🔧</div>
+        <div style="font-weight:700;font-size:13px;color:var(--epc)">EPC Contractor</div>
+        <div style="font-size:10px;color:#6e7681;margin-top:4px">المقاول — يرى تقييمه فقط</div>
+      </div>
+      <div class="pc-card" onclick="setPerspective('full')" style="background:#1c2130;border:1px solid #30363d;border-radius:10px;padding:20px 16px;cursor:pointer;transition:all .2s;text-align:center" onmouseover="this.style.borderColor='var(--con)'" onmouseout="this.style.borderColor='#30363d'">
+        <div style="font-size:24px;margin-bottom:8px">🔷</div>
+        <div style="font-weight:700;font-size:13px;color:var(--con)">Full Platform</div>
+        <div style="font-size:10px;color:#6e7681;margin-top:4px">المنصة الكاملة — الثلاثة منظورات</div>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:10px;color:#6e7681">يمكن تغيير هذا الاختيار لاحقاً من أسفل القائمة الجانبية</div>
+  </div>
+</div>
+<script>
+// ── DATA ──────────────────────────────────────────
+const CAPS = [
+  {id:'PM',n:'Project Management',   dom:'Governance',own:3.2,pmc:3.5,epc:2.8,tgt:4.0},
+  {id:'RC',n:'Risk & Contingency',   dom:'Governance',own:2.4,pmc:2.9,epc:2.1,tgt:4.5},
+  {id:'SC',n:'Scope Control',        dom:'Governance',own:3.0,pmc:3.2,epc:2.7,tgt:4.0},
+  {id:'ST',n:'Stakeholder Mgmt',     dom:'Governance',own:3.3,pmc:3.5,epc:2.9,tgt:4.0},
+  {id:'IN',n:'Innovation & Tech',    dom:'Governance',own:1.9,pmc:2.2,epc:1.6,tgt:4.0},
+  {id:'CO',n:'Cost Control',         dom:'Controls',  own:2.8,pmc:3.1,epc:2.5,tgt:4.5},
+  {id:'SH',n:'Schedule Control',     dom:'Controls',  own:2.6,pmc:2.8,epc:2.3,tgt:4.5},
+  {id:'PR',n:'Procurement',          dom:'Controls',  own:3.1,pmc:3.3,epc:2.9,tgt:4.0},
+  {id:'QM',n:'Quality Management',   dom:'Controls',  own:2.7,pmc:3.0,epc:2.4,tgt:4.0},
+  {id:'CH',n:'Change Management',    dom:'Controls',  own:2.3,pmc:2.6,epc:2.0,tgt:4.5},
+  {id:'IM',n:'Info Management',      dom:'Controls',  own:2.5,pmc:2.8,epc:2.2,tgt:4.0},
+  {id:'PE',n:'Performance Analytics',dom:'Controls',  own:2.6,pmc:3.0,epc:2.3,tgt:4.5},
+  {id:'HS',n:'HSE',                  dom:'Delivery',  own:3.5,pmc:3.7,epc:3.2,tgt:5.0},
+  {id:'EN',n:'Engineering',          dom:'Delivery',  own:2.9,pmc:3.2,epc:2.6,tgt:4.5},
+  {id:'CN',n:'Construction',         dom:'Delivery',  own:2.7,pmc:3.0,epc:2.4,tgt:4.5},
+  {id:'CM',n:'Commissioning',        dom:'Delivery',  own:2.4,pmc:2.7,epc:2.1,tgt:4.0},
+  {id:'SU',n:'Sustainability',       dom:'Delivery',  own:2.2,pmc:2.5,epc:1.9,tgt:4.5},
+];
+
+
+// ── QUESTION BANK (80 questions with perspective + phase filters) ──
+const PHASE_ORD_ASS=['PH1','PH2','PH3','PH4','PH5','PH6'];
+const DOM_CAP={
+  'DOM-01':'PM','DOM-02':'SC','DOM-03':'RC',
+  'DOM-04':'CO','DOM-05':'SH','DOM-06':'HS',
+  'DOM-07':'QM','DOM-08':'PR','DOM-09':'PR',
+  'DOM-10':'IN','DOM-11':'ST','DOM-12':'CH',
+  'DOM-13':'CO','DOM-14':'EN','DOM-15':'CM',
+  'DOM-16':'PE','DOM-17':'SU'
+};
+const DOM_NAMES_ASS={
+  'DOM-01':'Governance','DOM-02':'Strategic Planning','DOM-03':'Risk Management',
+  'DOM-04':'Cost & Controls','DOM-05':'Schedule Management','DOM-06':'HSE',
+  'DOM-07':'Quality Management','DOM-08':'Procurement','DOM-09':'Contract Mgmt',
+  'DOM-10':'Digital & Innovation','DOM-11':'Stakeholder Mgmt','DOM-12':'Change Control',
+  'DOM-13':'Claims Management','DOM-14':'Interface Mgmt','DOM-15':'Completions/Commissioning',
+  'DOM-16':'Value & Benefits','DOM-17':'Supply Chain'
+};
+const Q_BANK=[
+  {id:'Q001',dom:'DOM-01',phases:['PH1'],own:true, epc:false,pmc:true,text:'Is a project governance framework with a documented Delegation of Authority (DoA) matrix formally established and approved by the project owner?'},
+  {id:'Q002',dom:'DOM-01',phases:['PH2'],own:true, epc:true,pmc:true, text:'Is a project Steering Committee (or equivalent governance body) established, with formal terms of reference (ToR) and documented decision log?'},
+  {id:'Q003',dom:'DOM-01',phases:['PH3'],own:true, epc:true,pmc:true, text:'Is the stage-gate assurance process formally defined and integrated into the project governance framework with independent gate reviewers?'},
+  {id:'Q004',dom:'DOM-01',phases:['PH4'],own:true, epc:true,pmc:true, text:'Is an independent project assurance and audit program in place, with scheduled audits against the project execution plan and governance charter?'},
+  {id:'Q005',dom:'DOM-01',phases:['PH6'],own:true, epc:true,pmc:true, text:'Is a formal lessons-learned process established to capture, classify and disseminate project knowledge at closeout and key milestones?'},
+  {id:'Q006',dom:'DOM-02',phases:['PH2'],own:true, epc:false,pmc:true,text:'Is a Project Execution Strategy (PES) and Business Case formally established, approved at the right authority level and baselined?'},
+  {id:'Q007',dom:'DOM-02',phases:['PH1'],own:true, epc:false,pmc:true,text:'Are project objectives, success criteria and KPIs formally defined, approved and communicated to all key stakeholders?'},
+  {id:'Q008',dom:'DOM-02',phases:['PH2'],own:true, epc:false,pmc:true,text:'Is a comprehensive Project Execution Plan (PEP) developed, maintained and used as the controlling document for the project?'},
+  {id:'Q009',dom:'DOM-03',phases:['PH2'],own:true, epc:true,pmc:true, text:'Is a quantitative risk model (QRA/probabilistic cost and schedule) conducted at each project gate to set contingency and schedule reserve?'},
+  {id:'Q010',dom:'DOM-03',phases:['PH3'],own:true, epc:true,pmc:true, text:'Is a risk response plan formally established, regularly updated with owners, mitigations and residual risk ratings?'},
+  {id:'Q011',dom:'DOM-03',phases:['PH4'],own:true, epc:true,pmc:true, text:'Are risk responses assigned to owners with funded mitigation plans and integrated into project controls reporting?'},
+  {id:'Q012',dom:'DOM-03',phases:['PH4'],own:true, epc:true,pmc:true, text:'Does the project actively scan for emerging / low-probability high-impact risks and maintain a specific watch list?'},
+  {id:'Q013',dom:'DOM-04',phases:['PH2'],own:true, epc:true,pmc:true, text:'Are cost estimates prepared to a defined AACE class with a documented Basis of Estimate (BoE) and benchmarked against industry norms?'},
+  {id:'Q014',dom:'DOM-04',phases:['PH4'],own:false,epc:true,pmc:true, text:'Is earned value management (EVM) operating with a baselined performance measurement baseline (PMB), CPI/SPI trend analysis?'},
+  {id:'Q015',dom:'DOM-04',phases:['PH4'],own:false,epc:true,pmc:true, text:'Is a cost-loaded cash-flow forecast maintained against funding limits with variance analysis and forecast at completion (FAC)?'},
+  {id:'Q016',dom:'DOM-04',phases:['PH4'],own:false,epc:true,pmc:true, text:'Is there an integrated project-controls function where cost, schedule, risk and change are consolidated in a single reporting cycle?'},
+  {id:'Q017',dom:'DOM-05',phases:['PH2'],own:true, epc:true,pmc:true, text:'Is the project schedule built as a resource-loaded CPM network with a frozen, approved baseline and formal schedule basis?'},
+  {id:'Q018',dom:'DOM-05',phases:['PH4'],own:false,epc:true,pmc:true, text:'Is schedule control operating with a frozen baseline, rules-of-credit, period progress updates and variance analysis?'},
+  {id:'Q019',dom:'DOM-05',phases:['PH4'],own:false,epc:true,pmc:true, text:'Is schedule risk analysis run periodically to test the critical path, float consumption and schedule confidence levels?'},
+  {id:'Q020',dom:'DOM-06',phases:['PH2'],own:true, epc:true,pmc:false, text:'Is an HSE management system established with visible leadership commitment, HSE policy, safety targets and leading KPIs?'},
+  {id:'Q021',dom:'DOM-06',phases:['PH4'],own:true, epc:true,pmc:false, text:'Are construction and process-safety controls operating (permits-to-work, LOTO, SIMOPS plans, process safety reviews)?'},
+  {id:'Q022',dom:'DOM-06',phases:['PH5'],own:true, epc:true,pmc:false, text:'Is HSE performance during commissioning managed through a commissioning HSE plan with dedicated safety resources and protocols?'},
+  {id:'Q023',dom:'DOM-07',phases:['PH2'],own:false,epc:true,pmc:false, text:'Is the Quality Management System (QMS) aligned to a recognised standard (ISO 9001 or equivalent) with an approved quality plan?'},
+  {id:'Q024',dom:'DOM-07',phases:['PH4'],own:false,epc:true,pmc:false, text:'Is a non-conformance and defect management system in place to track, close and trend NCRs with root-cause analysis?'},
+  {id:'Q025',dom:'DOM-07',phases:['PH2'],own:false,epc:true,pmc:false, text:'Is design quality controlled through a Design Basis Memorandum (DBM), IFC drawing register and formal interdisciplinary check (IDC)?'},
+  {id:'Q026',dom:'DOM-07',phases:['PH3'],own:false,epc:true,pmc:false, text:'Are constructability reviews conducted at FEED and detailed-design stages with documented actions and close-out tracking?'},
+  {id:'Q027',dom:'DOM-07',phases:['PH4'],own:false,epc:true,pmc:false, text:'Is design change controlled through a formal Field Change Notice (FCN) or MoC process linked to cost and schedule impact?'},
+  {id:'Q028',dom:'DOM-08',phases:['PH3'],own:false,epc:true,pmc:false, text:'Is a procurement strategy developed and approved that defines the sourcing approach, supplier qualification and pre-award evaluation criteria?'},
+  {id:'Q029',dom:'DOM-08',phases:['PH4'],own:false,epc:true,pmc:false, text:'Is vendor and supplier management operating with approved expediting schedules, inspection and test plans (ITP) and performance tracking?'},
+  {id:'Q030',dom:'DOM-08',phases:['PH4'],own:false,epc:true,pmc:false, text:'Is materials management covering receiving inspection, storage, preservation, traceability and issue-to-construction reporting?'},
+  {id:'Q031',dom:'DOM-09',phases:['PH3'],own:true, epc:true,pmc:false, text:'Is a contract strategy developed and approved that selects the appropriate contracting model, risk allocation and pricing structure?'},
+  {id:'Q032',dom:'DOM-09',phases:['PH4'],own:false,epc:true,pmc:false, text:'Is contract administration managed through a certified contracts team with formal correspondence logs, notice registers and variation control?'},
+  {id:'Q033',dom:'DOM-09',phases:['PH3'],own:false,epc:true,pmc:false, text:'Are performance security instruments (bonds, guarantees, retentions) managed within contractual terms with expiry tracking?'},
+  {id:'Q034',dom:'DOM-09',phases:['PH6'],own:true, epc:true,pmc:false, text:'Is contract close-out managed through a formal punch-list closure, final account settlement and contractor performance evaluation?'},
+  {id:'Q035',dom:'DOM-10',phases:['PH2'],own:true, epc:true,pmc:false, text:'Is BIM or a digital data standard implemented for design deliverables with a Common Data Environment (CDE) and naming convention?'},
+  {id:'Q036',dom:'DOM-10',phases:['PH4'],own:false,epc:true,pmc:false, text:'Are integrated digital project controls (PMIS, cost/schedule integration, real-time dashboards) operational and used for decision-making?'},
+  {id:'Q037',dom:'DOM-10',phases:['PH4'],own:false,epc:true,pmc:false, text:'Are project analytics and predictive insights (cost-at-completion, schedule confidence, risk exposure) generated via embedded digital tools?'},
+  {id:'Q038',dom:'DOM-11',phases:['PH1'],own:true, epc:false,pmc:true,text:'Is a stakeholder identification and mapping exercise completed, with a stakeholder register maintained and updated throughout the project?'},
+  {id:'Q039',dom:'DOM-11',phases:['PH2'],own:true, epc:true,pmc:true, text:'Is a stakeholder engagement and communication plan in place, approved and executed with feedback tracking and closure?'},
+  {id:'Q040',dom:'DOM-11',phases:['PH1'],own:true, epc:false,pmc:true,text:'Are regulatory permits, authority approvals and environmental impact assessments tracked in a permit register with owners and deadlines?'},
+  {id:'Q041',dom:'DOM-12',phases:['PH3'],own:true, epc:true,pmc:false, text:'Is a formal change control process in place with a change register, impact assessment (cost/schedule/risk) and approval authority matrix?'},
+  {id:'Q042',dom:'DOM-12',phases:['PH4'],own:true, epc:true,pmc:false, text:'Is a trend and early-warning system operating that identifies potential changes before they become formal change orders?'},
+  {id:'Q043',dom:'DOM-13',phases:['PH3'],own:true, epc:true,pmc:false, text:'Is a claims avoidance programme in place from contract award, including contemporaneous records, notice protocols and risk event registers?'},
+  {id:'Q044',dom:'DOM-13',phases:['PH4'],own:true, epc:true,pmc:false, text:'Is a claims and dispute management process established with a notices register, time-bar compliance tracking and legal escalation protocol?'},
+  {id:'Q045',dom:'DOM-13',phases:['PH4'],own:true, epc:true,pmc:false, text:'Is a delay analysis methodology defined (as-planned vs as-built, impacted as-planned, windows analysis) and applied to active delay events?'},
+  {id:'Q046',dom:'DOM-14',phases:['PH2'],own:true, epc:true,pmc:true, text:'Is a project interface management framework in place with an interface register, nominated interface managers and resolution protocol?'},
+  {id:'Q047',dom:'DOM-14',phases:['PH4'],own:false,epc:true,pmc:true, text:'Are project interfaces controlled and closed through formal interface queries (IQs), system completion walk-downs and sign-off registers?'},
+  {id:'Q048',dom:'DOM-15',phases:['PH2'],own:true, epc:true,pmc:false, text:'Is a completions management system (CMS) in place from FEED stage with subsystem/system breakdown, ITRs and RFSU criteria defined?'},
+  {id:'Q049',dom:'DOM-15',phases:['PH4'],own:true, epc:true,pmc:false, text:'Is a commissioning management plan (CMP) in place with phase-by-phase commissioning sequence, resource plan and system handover schedule?'},
+  {id:'Q050',dom:'DOM-15',phases:['PH5'],own:false,epc:true,pmc:false, text:'Is operational readiness managed through an Operational Readiness Assessment (ORA) with training, procedures and spares availability verified?'},
+  {id:'Q051',dom:'DOM-15',phases:['PH5'],own:false,epc:true,pmc:false, text:'Is a performance testing and start-up protocol in place covering process performance guarantees, reliability run and acceptance criteria?'},
+  {id:'Q052',dom:'DOM-15',phases:['PH6'],own:false,epc:true,pmc:false, text:'Is asset information handover managed through a data-room or EDMS with as-built drawings, O&M manuals and spare parts lists verified?'},
+  {id:'Q053',dom:'DOM-16',phases:['PH2'],own:true, epc:true,pmc:false, text:'Is a value engineering process applied during FEED and design stages with a formal workshop methodology and implementation tracking?'},
+  {id:'Q054',dom:'DOM-16',phases:['PH6'],own:true, epc:true,pmc:false, text:'Is a benefits realisation management (BRM) process in place with defined KPIs, measurement baseline and post-project review schedule?'},
+  {id:'Q055',dom:'DOM-03',phases:['PH1'],own:true, epc:false,pmc:true,text:'Is the project risk appetite formally defined by the Owner, with risk tolerance thresholds for cost, schedule, safety and quality dimensions?'},
+  {id:'Q056',dom:'DOM-04',phases:['PH2'],own:true, epc:true,pmc:true, text:'Are funding approvals and investment decision gates aligned to the project lifecycle, with AFEs issued at the right phase gates?'},
+  {id:'Q057',dom:'DOM-04',phases:['PH4'],own:false,epc:true,pmc:true, text:'Is a project controls integration plan in place that integrates cost, schedule, risk and progress data into a unified reporting framework?'},
+  {id:'Q058',dom:'DOM-05',phases:['PH5'],own:false,epc:true,pmc:false, text:'Is a start-up sequence and milestone schedule defined with phase-based completion milestones, resource loading and critical handover dates?'},
+  {id:'Q059',dom:'DOM-02',phases:['PH2'],own:true, epc:true,pmc:true, text:'Is the project execution plan (PEP) approved, communicated and used as the primary controlling document for all project functions?'},
+  {id:'Q060',dom:'DOM-02',phases:['PH2'],own:true, epc:true,pmc:true, text:'Are project KPIs defined, baselined and reported in a consistent dashboard format to all governance levels on a regular cycle?'},
+  {id:'Q061',dom:'DOM-03',phases:['PH1'],own:true, epc:false,pmc:true,text:'Is a risk framework and risk management plan (RMP) in place that defines risk identification, assessment, response and reporting processes?'},
+  {id:'Q062',dom:'DOM-03',phases:['PH2'],own:true, epc:true,pmc:true, text:'Is a quantitative risk analysis (QRA) conducted for cost and schedule at gate reviews, with Monte Carlo simulation outputs used for contingency?'},
+  {id:'Q063',dom:'DOM-03',phases:['PH4'],own:true, epc:true,pmc:true, text:'Is a risk response and control programme operating with risk owners, mitigation actions, residual risk ratings and monthly status review?'},
+  {id:'Q064',dom:'DOM-03',phases:['PH2'],own:true, epc:true,pmc:true, text:'Are emerging and black-swan risks (geopolitical, extreme weather, supply chain disruption) assessed and tracked in the risk register?'},
+  {id:'Q065',dom:'DOM-04',phases:['PH2'],own:true, epc:true,pmc:true, text:'Is a cost estimating process in place with an estimate class definition, basis of estimate document and peer review requirement?'},
+  {id:'Q066',dom:'DOM-04',phases:['PH4'],own:false,epc:true,pmc:true, text:'Is a cost-control and earned-value management (EVM) system operating with CPI, SPI, EAC and variance-at-completion metrics reported?'},
+  {id:'Q067',dom:'DOM-04',phases:['PH4'],own:false,epc:true,pmc:true, text:'Is a cash-flow forecast and funding-drawdown plan maintained against approved funding limits with monthly variance analysis?'},
+  {id:'Q068',dom:'DOM-05',phases:['PH2'],own:true, epc:true,pmc:true, text:'Is a Level 3 integrated master schedule (IMS) maintained and baselined, covering all project phases and key milestones?'},
+  {id:'Q069',dom:'DOM-05',phases:['PH4'],own:false,epc:true,pmc:true, text:'Is schedule progress measured through objective progress measurement (OPM) with defined rules of credit and physical completion metrics?'},
+  {id:'Q070',dom:'DOM-05',phases:['PH2'],own:true, epc:true,pmc:true, text:'Is schedule risk analysis (SRA) conducted at each gate using Monte Carlo simulation to assess P50/P80 schedule confidence?'},
+  {id:'Q071',dom:'DOM-06',phases:['PH1'],own:true, epc:false,pmc:false,text:'Is an HSE leadership and policy framework in place, with a documented HSE policy, leadership commitment statement and zero-harm culture embedded?'},
+  {id:'Q072',dom:'DOM-16',phases:['PH6'],own:true, epc:true,pmc:false, text:'Is a handover-to-operations and project close-out plan in place with defined milestones, responsible parties and completion criteria?'},
+  {id:'Q073',dom:'DOM-02',phases:['PH1'],own:true, epc:false,pmc:true,text:'Is the project organisational structure defined with a project charter, OBS, reporting lines and role definitions for all key functions?'},
+  {id:'Q074',dom:'DOM-05',phases:['PH4'],own:false,epc:true,pmc:true, text:'Are critical-path activities and float consumption monitored weekly with formal recovery plans triggered at defined float thresholds?'},
+  {id:'Q075',dom:'DOM-07',phases:['PH4'],own:false,epc:true,pmc:false, text:'Are corrective and preventive action (CAPA) processes linked to non-conformances, with close-out tracking and trend analysis?'},
+  {id:'Q076',dom:'DOM-06',phases:['PH4'],own:true, epc:true,pmc:false, text:'Is an HSE incident reporting, investigation and root-cause analysis process in place with CAPA implementation tracking?'},
+  {id:'Q077',dom:'DOM-17',phases:['PH3'],own:false,epc:true,pmc:false, text:'Are tender documents (ITT/RFP), evaluation criteria and award recommendations reviewed through a governed tender board process?'},
+  {id:'Q078',dom:'DOM-17',phases:['PH3'],own:false,epc:true,pmc:false, text:'Is logistics and freight management governed by a logistics management plan covering freight modes, customs, port clearance and delivery tracking?'},
+  {id:'Q079',dom:'DOM-17',phases:['PH2','PH3','PH4'],own:false,epc:true,pmc:false, text:'Is supply chain resilience and risk management in place with single-source risk mitigation, lead-time tracking and supplier financial health monitoring?'},
+  {id:'Q080',dom:'DOM-17',phases:['PH3','PH4'],own:false,epc:true,pmc:false, text:'Is the digital supply chain operating with a control tower, real-time visibility of critical materials and predictive delivery risk alerts?'},
+];
+// Assessment mode state
+let projPhase='PH4';
+let assMode='capability'; // 'capability' | 'question'
+// Filter helpers
+function qStatus(q){
+  if(persp==='own'&&!q.own)return'excluded';
+  if(persp==='pmc'&&!q.pmc)return'excluded';
+  if(persp==='epc'&&!q.epc)return'excluded';
+  const ci=PHASE_ORD_ASS.indexOf(projPhase);
+  return q.phases.some(p=>PHASE_ORD_ASS.indexOf(p)<=ci)?'active':'future';
+}
+// ── Q_EVIDENCE: per-question evidence requirements ────────────────────────────
+const Q_EVIDENCE = {
+  'Q001': {ev:["Governance charter", "DOA matrix", "RACI"],et:["DOC"],vr:["EVID", "PREREQ", "CTRL", "DOC", "GOV"]},
+  'Q002': {ev:["Steering committee TOR", "meeting minutes", "decision register"],et:["REC", "DOC"],vr:["EVID", "PREREQ", "GOV"]},
+  'Q003': {ev:["Stage-gate procedure", "gate review reports", "independent review records"],et:["REC", "DOC"],vr:["EVID", "PREREQ", "GOV", "CTRL"]},
+  'Q004': {ev:["Assurance program", "audit reports", "findings register"],et:["REC", "DOC"],vr:["EVID", "GOV", "CTRL"]},
+  'Q005': {ev:["Lessons-learned register", "governance action plan"],et:["REC", "DOC"],vr:["EVID", "GOV"]},
+  'Q006': {ev:["PES document", "Business Case", "approval record"],et:["REC", "DOC"],vr:["EVID", "PREREQ"]},
+  'Q007': {ev:["Project objectives document", "KPI framework", "Owner approval"],et:["DOC"],vr:["EVID", "PREREQ"]},
+  'Q008': {ev:["PEP document", "phase transition approval records"],et:["REC", "DOC"],vr:["EVID", "PREREQ"]},
+  'Q009': {ev:["QRA report", "P80/P50 outputs", "integration with cost/schedule"],et:["DOC"],vr:["EVID", "CTRL"]},
+  'Q010': {ev:["Risk response plan", "risk register", "residual risk report"],et:["REC", "DOC"],vr:["EVID", "CTRL"]},
+  'Q011': {ev:["Risk treatment plan", "action tracker"],et:["REC", "DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q012': {ev:["Emerging-risk log", "playbooks"],et:["REC", "DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q013': {ev:["Estimate package", "BoE", "benchmark data"],et:["DOC"],vr:["EVID", "PREREQ", "CTRL", "DOC"]},
+  'Q014': {ev:["Cost baseline", "EVM reports", "EAC log"],et:["REC", "DOC"],vr:["EVID", "PREREQ", "CTRL", "DOC", "KPI"]},
+  'Q015': {ev:["Cash-flow model", "funding plan"],et:["DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q016': {ev:["Controls procedure", "integrated report"],et:["DOC"],vr:["EVID", "PREREQ", "CTRL", "DOC", "KPI"]},
+  'Q017': {ev:["Schedule", "BoS", "WBS dictionary"],et:["DOC"],vr:["EVID", "PREREQ", "CTRL", "DOC"]},
+  'Q018': {ev:["Progress reports", "CP analysis", "recovery plan"],et:["DOC"],vr:["EVID", "PREREQ", "CTRL", "DOC", "KPI"]},
+  'Q019': {ev:["SRA report", "milestone protection plan"],et:["DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q020': {ev:["HSE-MS manual", "HSE plan"],et:["DOC"],vr:["EVID", "CTRL", "DOC", "GOV"]},
+  'Q021': {ev:["PTW logs", "JSA register", "HAZOP action tracker"],et:["REC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q022': {ev:["Commissioning HSE plan", "SWA register", "readiness cert"],et:["REC", "DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q023': {ev:["QMS manual", "audit schedule", "audit reports"],et:["DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q024': {ev:["NCR register", "RCA records", "close-out evidence"],et:["REC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q025': {ev:["DBM", "ITP library", "design review minutes", "transmittal register"],et:["OBS", "REC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q026': {ev:["Constructability review reports", "findings register", "execution plan updates"],et:["REC", "DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q027': {ev:["FCN/FCR register", "engineering authority approvals", "configuration log"],et:["REC", "DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q028': {ev:["Procurement strategy", "vendor qualification register", "contract model summary"],et:["REC", "DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q029': {ev:["Expediting plan", "inspection records", "TPI co-ordination log", "NCR register"],et:["OBS", "REC", "DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q030': {ev:["Materials management plan", "MRN register", "tag list", "preservation log"],et:["REC", "DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q031': {ev:["Contract strategy", "risk allocation matrix", "contract terms summary"],et:["DOC"],vr:["EVID", "CTRL", "DOC", "GOV"]},
+  'Q032': {ev:["Correspondence register", "variation log", "commercial reports"],et:["REC", "DOC"],vr:["EVID", "CTRL", "DOC", "GOV"]},
+  'Q033': {ev:["Bond register", "insurance certificates", "premium payment records"],et:["REC", "DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q034': {ev:["Punch-list", "final account agreement", "demobilisation plan", "DLP records"],et:["REC", "DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q035': {ev:["BIM execution plan", "CDE configuration", "LoD matrix", "clash register"],et:["REC", "DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q036': {ev:["PMIS configuration", "interface specs", "EVM module settings", "dashboard screenshots"],et:["SYS"],vr:["EVID", "CTRL", "DOC"]},
+  'Q037': {ev:["Analytics model specs", "EAC reports", "delay prediction logs", "risk trend dashboard"],et:["SYS", "REC", "DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q038': {ev:["Stakeholder register", "influence-interest matrix", "engagement status log"],et:["REC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q039': {ev:["Engagement plan", "communications tracker", "meeting minutes", "escalation log"],et:["REC", "DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q040': {ev:["Permitting register", "permit copies", "approval correspondence", "timeline tracker"],et:["REC", "DOC"],vr:["EVID", "PREREQ", "CTRL", "DOC", "GOV"]},
+  'Q041': {ev:["Change register", "approval matrix", "impact assessments", "baseline revision records"],et:["REC", "DOC"],vr:["EVID", "PREREQ", "CTRL", "DOC", "GOV"]},
+  'Q042': {ev:["Trend register", "early-warning notifications", "corrective action log"],et:["REC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q043': {ev:["Claims avoidance plan", "notice compliance log", "records management protocol"],et:["REC", "DOC"],vr:["EVID", "PREREQ", "CTRL", "DOC", "GOV"]},
+  'Q044': {ev:["Claims log", "dispute resolution procedure", "cost-exposure register", "legal correspondence"],et:["REC", "DOC"],vr:["EVID", "CTRL", "DOC", "GOV"]},
+  'Q045': {ev:["Delay analysis report", "EOT submissions", "contemporaneous delay records", "approved methodology"],et:["REC", "DOC"],vr:["EVID", "PREREQ", "CTRL", "DOC"]},
+  'Q046': {ev:["Interface register", "accountabilities matrix", "interface management tool", "closure report"],et:["SYS", "REC", "DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q047': {ev:["TQ/IQ register", "response records", "escalation log", "audit trail"],et:["REC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q048': {ev:["CMS configuration", "system-boundary definition", "STPs", "punch-list database"],et:["SYS"],vr:["EVID", "CTRL", "DOC"]},
+  'Q049': {ev:["CMP", "phased sequence", "vendor schedule", "commissioning progress tracker"],et:["REC", "DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q050': {ev:["ORA report", "operating procedures", "operator training records", "spare parts delivery log"],et:["REC", "DOC"],vr:["EVID", "PREREQ", "CTRL", "DOC"]},
+  'Q051': {ev:["Commissioning checksheets", "performance test reports", "provisional acceptance certificate"],et:["DOC"],vr:["EVID", "PREREQ", "CTRL", "DOC"]},
+  'Q052': {ev:["Handover data plan", "as-built register", "vendor data books", "O&M manuals", "CMMS data pack"],et:["REC", "DOC"],vr:["EVID", "PREREQ", "CTRL", "DOC"]},
+  'Q053': {ev:["VE register", "approved savings log", "implementation tracker"],et:["REC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q054': {ev:["Benefits register", "owner assignments", "KPI tracker", "BRM report"],et:["REC", "DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q055': {ev:["Risk appetite statement", "escalation threshold matrix", "risk decision log"],et:["REC"],vr:["EVID", "CTRL", "DOC", "GOV"]},
+  'Q056': {ev:["Funding approval records", "Class 3+ estimate", "drawdown schedule", "FID decision record"],et:["REC", "DOC"],vr:["EVID", "PREREQ", "CTRL", "DOC", "GOV"]},
+  'Q057': {ev:["Project controls integration plan", "EVM integration evidence", "integrated performance report"],et:["DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q058': {ev:["Start-up sequence schedule", "energisation plan", "first-production critical path"],et:["DOC"],vr:["EVID", "PREREQ", "CTRL", "DOC"]},
+  'Q059': {ev:["Approved PEP", "version register", "communications confirmation"],et:["INT", "REC"],vr:["EVID", "PREREQ", "CTRL", "DOC"]},
+  'Q060': {ev:["KPI register", "KPI dashboard", "monthly performance reports"],et:["SYS", "REC", "DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q061': {ev:["RMP", "risk methodology", "risk register", "reporting protocol"],et:["REC", "DOC"],vr:["EVID", "PREREQ", "CTRL", "DOC", "GOV"]},
+  'Q062': {ev:["QRA report", "P50/P80 outputs", "contingency endorsement record"],et:["REC", "DOC"],vr:["EVID", "PREREQ", "CTRL", "DOC"]},
+  'Q063': {ev:["Risk register with owners", "mitigation action log", "risk-burn-down report"],et:["REC", "DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q064': {ev:["Black-swan risk register", "resilience workshop minutes", "contingency provision", "insurance coverage summary"],et:["REC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q065': {ev:["Estimate register", "BOE", "peer-review sign-offs", "gate estimate reports"],et:["INT", "REC", "DOC"],vr:["EVID", "PREREQ", "CTRL", "DOC"]},
+  'Q066': {ev:["PMB", "monthly EVM report", "EAC forecast", "variance analysis"],et:["DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q067': {ev:["Cash-flow forecast", "IPC register", "contingency drawdown tracker"],et:["REC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q068': {ev:["Baselined L3 IMS", "critical-path analysis", "resource histogram", "monthly schedule report"],et:["DOC"],vr:["EVID", "PREREQ", "CTRL", "DOC"]},
+  'Q069': {ev:["Progress measurement procedure", "SPI report", "look-ahead schedule", "recovery plan record"],et:["REC", "DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q070': {ev:["SRA report", "P50/P80 completion date range", "float risk register", "schedule contingency endorsement"],et:["REC", "DOC"],vr:["EVID", "PREREQ", "CTRL", "DOC"]},
+  'Q071': {ev:["HSE policy statement", "management commitment plan", "LIF records", "HSE objectives"],et:["REC", "DOC"],vr:["EVID", "CTRL", "DOC", "GOV"]},
+  'Q072': {ev:["Close-out plan", "punch-list tracker", "final-account summary", "demobilisation plan"],et:["REC", "DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q073': {ev:["Project org chart", "role descriptions", "key-resource confirmation letters"],et:["INT"],vr:["EVID", "PREREQ", "CTRL", "DOC"]},
+  'Q074': {ev:["Critical-path tracker", "float-consumption log", "weekly L4/5 look-ahead schedule"],et:["REC", "DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q075': {ev:["CAPA register", "closure evidence", "recurrence statistics report"],et:["REC", "DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q076': {ev:["Incident register", "near-miss reports", "investigation reports", "RCA records", "CAR tracker"],et:["REC", "DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q077': {ev:["ITT/RFP register", "bid evaluation matrix", "award approval record", "tender audit trail"],et:["REC", "DOC"],vr:["EVID", "PREREQ", "CTRL", "DOC", "GOV"]},
+  'Q078': {ev:["Logistics plan", "import/export clearance records", "freight-tracking dashboard", "laydown register"],et:["SYS", "REC", "DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q079': {ev:["Supplier risk register", "single-source analysis", "contingency sourcing plans", "disruption response protocol"],et:["REC", "DOC"],vr:["EVID", "CTRL", "DOC"]},
+  'Q080': {ev:["Control-tower adoption log", "analytics catalogue", "eProcurement integration evidence", "supplier portal screenshots"],et:["SYS", "REC"],vr:["EVID", "CTRL", "DOC"]},
+};
+
+// ── EVIDENCE VALIDATION STATE (question-level) ───────────────────────────────
+// Key: qId + '_' + perspective   e.g. 'Q001_own'
+// Value: { items:[{ref,status,note}], status, ai_score, ai_note, admin_score }
+let Q_VAL = {};
+
+const EV_TYPE_ICON = {DOC:'[DOC]',REC:'[REC]',SYS:'[SYS]',OBS:'[OBS]',INT:'[INT]'};
+const EV_TYPE_STYLE= {DOC:'background:#1e3a5f;color:#58a6ff',REC:'background:#1a3320;color:#3fb950',SYS:'background:#1a1a2e;color:#a78bfa',OBS:'background:#2a1a08;color:#f59e0b',INT:'background:#1a0a2a;color:#f472b6'};
+const EV_TYPE_NAME = {DOC:'Document',REC:'Record/Register',SYS:'System Output',OBS:'Observation',INT:'Interview/Confirmation'};
+
+function qValKey(qId, p){ return qId + '_' + (p && p!=='full' ? p : persp==='full'?'own':persp); }
+
+function getQVal(qId, p){
+  const k = qValKey(qId, p);
+  if(!Q_VAL[k]){
+    const qe = Q_EVIDENCE[qId] || {ev:[],et:['DOC'],vr:[]};
+    Q_VAL[k] = {
+      items: qe.ev.map(()=>({ref:'',status:'missing',note:''})),
+      status: 'draft',
+      ai_score: null,
+      ai_note: '',
+      admin_score: null
+    };
+  }
+  return Q_VAL[k];
+}
+
+function qEvidenceCompleteness(qId, p){
+  const v = getQVal(qId, p);
+  if(!v.items.length) return 1;
+  const avail   = v.items.filter(i=>i.status==='available').length;
+  const partial = v.items.filter(i=>i.status==='partial').length;
+  return (avail + partial * 0.5) / v.items.length;
+}
+
+// Per-question validation threshold — based on evidence rules and domain governance weight
+function qValThreshold(qId){
+  const vr = (Q_EVIDENCE[qId]||{vr:[]}).vr;
+  if(vr.includes('PREREQ'))          return 0.80;  // foundational question — 80% evidence required
+  if(vr.includes('GOV'))             return 0.75;  // governance-domain question — 75%
+  if(vr.includes('KPI')||vr.includes('CTRL')) return 0.60; // control/KPI question — 60%
+  return 0.60;                                       // default medium threshold
+}
+
+// PMC engagement level for a question (Active in PH1/PH2, Monitor in PH3+)
+function qPmcRole(q){
+  if(!q.pmc) return null;
+  const actPhases = ['PH1','PH2'];
+  return q.phases.some(p=>actPhases.includes(p)) ? 'Active' : 'Monitor';
+}
+
+function runQAIValidation(qId, claimedScore){
+  const p = persp==='full'?'own':persp;
+  const v = getQVal(qId, p);
+  const comp = qEvidenceCompleteness(qId, p);
+  const hasRef = v.items.some(i=>i.ref && i.ref.trim().length > 0);
+  const qe = Q_EVIDENCE[qId] || {vr:[]};
+  const isKPI    = qe.vr.includes('KPI');
+  const isPREREQ = qe.vr.includes('PREREQ');
+  const thr = qValThreshold(qId);   // per-question threshold (0.60–0.80)
+
+  let suggested = claimedScore;
+  let note = '';
+
+  if(comp === 0){
+    suggested = Math.min(2, claimedScore);
+    note = '[X] No evidence available. Maximum supportable level is 2 (Developing). Claimed score cannot be validated.';
+  } else if(comp < 0.34){
+    suggested = Math.max(1, claimedScore - 2);
+    note = `[!] Evidence coverage very low (${Math.round(comp*100)}%). Most required items missing. Score reduced by 2.`;
+  } else if(comp < 0.67){
+    suggested = Math.max(1, claimedScore - 1);
+    note = `[~] Evidence partially available (${Math.round(comp*100)}%). Score reduced by 1 pending full evidence submission.`;
+  } else if(comp < thr){
+    if(!hasRef){
+      suggested = Math.max(1, claimedScore - 0.5);
+      note = `◑ Evidence ${Math.round(comp*100)}% — below required threshold (${Math.round(thr*100)}%) and no references. Score held.`;
+    } else {
+      suggested = Math.max(1, claimedScore - 0.5);
+      note = `◑ Evidence ${Math.round(comp*100)}% — below required threshold (${Math.round(thr*100)}%). Score held pending full submission.`;
+    }
+  } else if(comp < 1.0){
+    if(!hasRef){
+      suggested = Math.max(1, claimedScore - 0.5);
+      note = `◑ Evidence mostly available (${Math.round(comp*100)}%) but no document references provided. Score held pending references.`;
+    } else {
+      suggested = claimedScore;
+      note = `✓ Evidence ${Math.round(comp*100)}% — meets threshold (${Math.round(thr*100)}%) with references. Score confirmed pending admin review.`;
+    }
+  } else {
+    if(hasRef){
+      suggested = claimedScore;
+      note = `[OK] All evidence available with references (${Math.round(comp*100)}%). Threshold met (${Math.round(thr*100)}%). Score confirmed.`;
+    } else {
+      suggested = Math.max(1, claimedScore - 0.5);
+      note = `◑ All evidence marked available but no document references provided. Add references to confirm score.`;
+    }
+  }
+
+  // PREREQ penalty: if score claims high but evidence shows foundational gaps
+  if(isPREREQ && suggested >= 4 && comp < thr){
+    suggested = Math.min(suggested, 3.5);
+    note += ' [PREREQ: foundational evidence must meet 80% threshold before L4+ score is accepted]';
+  }
+
+  v.ai_score = Math.round(suggested * 2) / 2; // round to 0.5
+  v.ai_note  = note;
+  v.status   = 'ai_reviewed';
+  saveState();
+  renderAss();  // re-render so AI result section appears immediately
+}
+
+function adminValidateQ(qId, score){
+  const p = persp==='full'?'own':persp;
+  const v = getQVal(qId, p);
+  v.admin_score = parseFloat(score);
+  v.status = 'admin_validated';
+  saveState();
+  renderAss();
+}
+
+function updateQEvidenceItem(qId, idx, field, value){
+  const p = persp==='full'?'own':persp;
+  const v = getQVal(qId, p);
+  if(!v.items[idx]) v.items[idx]={ref:'',status:'missing',note:''};
+  v.items[idx][field] = value;
+  // Update status
+  const anyFilled = v.items.some(i=>i.status!=='missing'||i.ref);
+  if(anyFilled && v.status==='draft') v.status = 'evidence_added';
+  saveState();
+  // Live-update just the badge element without destroying the whole panel
+  const badgeEl = document.getElementById('ev-badge-'+qId);
+  if(badgeEl) badgeEl.outerHTML = qValBadge(qId);
+  // Live-update completeness text if it exists
+  const compEl = document.getElementById('ev-comp-'+qId);
+  if(compEl){ const c=qEvidenceCompleteness(qId,p); compEl.textContent=Math.round(c*100)+'% evidence'; }
+}
+
+function qValBadge(qId, p){
+  const v  = getQVal(qId, p||persp);
+  const comp = qEvidenceCompleteness(qId, p||persp);
+  const pct  = Math.round(comp*100);
+  if(v.status==='admin_validated') return `<span id="ev-badge-${qId}" class="val-badge val-done">[OK] Validated ${v.admin_score!==null?v.admin_score:''}</span>`;
+  if(v.status==='ai_reviewed')     return `<span id="ev-badge-${qId}" class="val-badge val-ai">[AI] ${v.ai_score!==null?v.ai_score:''}</span>`;
+  if(v.status==='evidence_added')  return `<span id="ev-badge-${qId}" class="val-badge val-pending" id="ev-comp-${qId}">[...] ${pct}% evidence</span>`;
+  return `<span id="ev-badge-${qId}" class="val-badge val-draft">[--] No evidence</span>`;
+}
+
+function capValSummary(capId){
+  // Aggregate question-level validation for a capability
+  const p = persp==='full'?'own':persp;
+  const capQs = Q_BANK.filter(q=>DOM_CAP[q.dom]===capId);
+  if(!capQs.length) return {pct:0, validated:0, total:0};
+  let total=0, done=0, evAvail=0;
+  capQs.forEach(q=>{
+    if(qStatus(q)!=='active') return;
+    total++;
+    const v = getQVal(q.id, p);
+    if(v.status==='admin_validated') done++;
+    const comp = qEvidenceCompleteness(q.id, p);
+    if(comp>0) evAvail++;
+  });
+  return {pct: total?Math.round(evAvail/total*100):0, validated:done, total};
+}
+
+function renderQEvidencePanel(qId, claimedScore){
+  const p  = persp==='full'?'own':persp;
+  const v  = getQVal(qId, p);
+  const qe = Q_EVIDENCE[qId] || {ev:[],et:['DOC'],vr:[]};
+  const statusColors = {draft:'#6e7681',evidence_added:'#3b82f6',ai_reviewed:'#f59e0b',admin_validated:'#3fb950'};
+  const statusLabels = {draft:'[ -- ] No Evidence',evidence_added:'[ ... ] Evidence Added — Submit for AI Review',ai_reviewed:'[ AI ] AI Reviewed — Awaiting Admin Validation',admin_validated:'[ OK ] Admin Validated'};
+  const sc = statusColors[v.status]||'#6e7681';
+
+  const typeIcons = qe.et.map(t=>`<span style="font-size:9px;font-weight:700;border-radius:3px;padding:2px 7px;${EV_TYPE_STYLE[t]||'background:#1e1e2e;color:#8b949e'}" title="${EV_TYPE_NAME[t]||t}">${t}</span>`).join(' ');
+
+  const itemsHtml = qe.ev.map((evItem,idx)=>{
+    const item = v.items[idx] || {ref:'',status:'missing',note:''};
+    const etype = qe.et[Math.min(idx, qe.et.length-1)];
+    const statusOpts = ['missing','partial','available'].map(s=>
+      `<option value="${s}" ${item.status===s?'selected':''}>${s==='missing'?'[ X ] Missing':s==='partial'?'[ ~ ] Partial':'[ OK ] Available'}</option>`
+    ).join('');
+    return `<div style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:10px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="font-size:9px;font-weight:700;border-radius:3px;padding:1px 5px;margin-right:5px;${EV_TYPE_STYLE[etype]||'background:#1e1e2e;color:#8b949e'}">${etype}</span><span style="font-size:11px;color:#8b949e;flex:1">${evItem}</span>
+        <select onchange="updateQEvidenceItem('${qId}',${idx},'status',this.value)"
+          style="background:#161b22;border:1px solid #30363d;border-radius:4px;color:var(--tx);font-size:10px;padding:2px 6px">
+          ${statusOpts}
+        </select>
+      </div>
+      <input type="text" value="${item.ref||''}"
+        placeholder="Reference (document name / system / location)..."
+        onchange="updateQEvidenceItem('${qId}',${idx},'ref',this.value)"
+        style="width:100%;background:#161b22;border:1px solid #21262d;border-radius:4px;color:var(--tx);font-size:11px;padding:5px 8px;box-sizing:border-box"/>
+    </div>`;
+  }).join('');
+
+  const aiSection = v.ai_note ? `<div style="background:#161b22;border:1px solid ${sc};border-radius:6px;padding:10px;margin-top:10px;font-size:11px;color:${sc}">
+    <strong>[AI] Assessment:</strong> ${v.ai_note}
+    ${v.ai_score!==null?`<div style="margin-top:6px">Suggested Score: <strong style="font-size:14px">${v.ai_score}</strong> <span style="color:#6e7681">(claimed: ${claimedScore})</span></div>`:''}
+  </div>` : '';
+
+  const adminSection = v.ai_score!==null ? `<div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
+    <span style="font-size:11px;color:#8b949e">Admin Validated Score:</span>
+    <select id="adm-q-${qId}" style="background:#0d1117;border:1px solid #30363d;border-radius:4px;color:var(--tx);padding:4px 8px;font-size:12px">
+      ${[1,1.5,2,2.5,3,3.5,4,4.5,5].map(s=>`<option value="${s}" ${(v.admin_score||v.ai_score)===s?'selected':''}>${s}</option>`).join('')}
+    </select>
+    <button onclick="adminValidateQ('${qId}',document.getElementById('adm-q-${qId}').value)"
+      style="background:#3fb950;color:#000;border:none;border-radius:4px;padding:5px 12px;font-weight:700;font-size:11px;cursor:pointer">[OK] Validate</button>
+    ${v.admin_score!==null?`<span style="color:#3fb950;font-size:11px;font-weight:700">Final: ${v.admin_score}</span>`:''}
+  </div>` : '';
+
+  return `<div style="border-top:1px dashed #21262d;margin-top:10px;padding-top:10px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <span style="font-size:11px;font-weight:600;color:#8b949e">Required Evidence</span>
+      ${typeIcons}
+    </div>
+    ${itemsHtml}
+    <button onclick="runQAIValidation('${qId}',${claimedScore})"
+      style="background:var(--acc);color:#000;border:none;border-radius:5px;padding:6px 14px;font-weight:700;font-size:11px;cursor:pointer;margin-top:4px">
+      [AI] Validate Evidence
+    </button>
+    ${aiSection}
+    ${adminSection}
+    <div style="margin-top:8px;font-size:10px;color:${sc};font-weight:600">${statusLabels[v.status]||v.status}</div>
+  </div>`;
+}
+
+function renderEvidencePanel(capId, p){
+  const modal = document.getElementById('evd-modal');
+  if(!modal) return;
+  const cap = CAPS.find(c=>c.id===capId);
+  if(!cap) return;
+  const v = getValState(capId, p);
+  const statusLabel = {draft:'[ -- ] No Evidence',evidence_pending:'[ ... ] Pending AI Review',ai_reviewed:'[ AI ] AI Reviewed — Awaiting Admin',admin_validated:'[ OK ] Admin Validated'}[v.status]||v.status;
+  const statusColor = {draft:'#6e7681',evidence_pending:'#3b82f6',ai_reviewed:'#f59e0b',admin_validated:'#3fb950'}[v.status]||'#6e7681';
+  const rawScore  = cap[p];
+  const aiScore   = v.ai_score;
+  const admScore  = v.admin_score;
+  const effScore  = admScore!==null?admScore:aiScore!==null?aiScore:rawScore;
+  const perspName = {own:'OWN (Owner)',pmc:'PMC (Consultant)',epc:'EPC (Contractor)'}[p]||p.toUpperCase();
+
+  modal.innerHTML = `
+  <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:24px;width:520px;max-width:95vw;position:relative">
+    <button onclick="closeEvidencePanel()" style="position:absolute;top:12px;right:12px;background:none;border:none;color:#6e7681;font-size:18px;cursor:pointer">✕</button>
+    <div style="font-weight:700;font-size:14px;color:var(--acc);margin-bottom:4px">Evidence Validation</div>
+    <div style="font-size:12px;color:#6e7681;margin-bottom:16px">${cap.n} — ${perspName}</div>
+
+    <div style="display:flex;gap:16px;margin-bottom:16px">
+      <div style="flex:1;background:#0d1117;border-radius:6px;padding:10px;text-align:center">
+        <div style="font-size:10px;color:#6e7681;margin-bottom:4px">Claimed Score</div>
+        <div style="font-size:22px;font-weight:800;color:var(--tx)">${rawScore}</div>
+      </div>
+      <div style="flex:1;background:#0d1117;border-radius:6px;padding:10px;text-align:center">
+        <div style="font-size:10px;color:#6e7681;margin-bottom:4px">AI Suggested</div>
+        <div style="font-size:22px;font-weight:800;color:${aiScore!==null?(aiScore<rawScore?'var(--red)':aiScore>rawScore?'var(--grn)':'var(--amb)'):'#6e7681'}">${aiScore!==null?aiScore:'—'}</div>
+      </div>
+      <div style="flex:1;background:#0d1117;border-radius:6px;padding:10px;text-align:center">
+        <div style="font-size:10px;color:#6e7681;margin-bottom:4px">Validated Score</div>
+        <div style="font-size:22px;font-weight:800;color:${admScore!==null?'var(--grn)':'#6e7681'}">${admScore!==null?admScore:'—'}</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:4px;font-size:11px;font-weight:600;color:#8b949e">Evidence Reference / Description</div>
+    <textarea id="evd-text" rows="4"
+      style="width:100%;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:var(--tx);padding:8px;font-size:12px;resize:vertical;box-sizing:border-box"
+      placeholder="Describe the evidence supporting this maturity score (document name, system, reference, observations)..."
+    >${v.evidence}</textarea>
+
+    <div id="evd-ai-note" style="display:${v.ai_note?'block':'none'};background:#161b22;border:1px solid ${statusColor};border-radius:6px;padding:8px 12px;margin-top:10px;font-size:11px;color:${statusColor}">
+      <strong>AI Assessment:</strong> ${v.ai_note}
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;align-items:center">
+      <button onclick="document.getElementById('evd-text')&&(getValState('${capId}','${p}').evidence=document.getElementById('evd-text').value,getValState('${capId}','${p}').status='evidence_pending',runAIValidation('${capId}'))"
+        style="background:var(--acc);color:#000;border:none;border-radius:6px;padding:8px 16px;font-weight:700;font-size:12px;cursor:pointer">
+        [AI] Submit for Validation
+      </button>
+      ${v.ai_score!==null?`
+      <select id="adm-score-sel" style="background:#0d1117;border:1px solid #30363d;border-radius:6px;color:var(--tx);padding:6px 10px;font-size:12px">
+        ${[1,2,3,4,5].map(s=>`<option value="${s}" ${(admScore||v.ai_score)===s?'selected':''}>${s}</option>`).join('')}
+      </select>
+      <button onclick="adminValidate('${capId}',document.getElementById('adm-score-sel').value)"
+        style="background:#3fb950;color:#000;border:none;border-radius:6px;padding:8px 16px;font-weight:700;font-size:12px;cursor:pointer">
+        [OK] Admin Validate
+      </button>` : ''}
+    </div>
+
+    <div style="margin-top:12px;font-size:10px;color:${statusColor};font-weight:600">${statusLabel}</div>
+  </div>`;
+}
+
+function setProjPhase(ph){
+  projPhase=ph;
+  document.querySelectorAll('.ph-btn').forEach(b=>{
+    const idx=PHASE_ORD_ASS.indexOf(b.dataset.ph);
+    const cur=PHASE_ORD_ASS.indexOf(ph);
+    b.classList.remove('ph-active','ph-past');
+    if(idx<cur)b.classList.add('ph-past');
+    if(idx===cur)b.classList.add('ph-active');
+  });
+  updAssScope();
+  renderAss();
+  saveState();
+}
+function toggleAssMode(){
+  assMode=assMode==='capability'?'question':'capability';
+  document.getElementById('ass-mode-btn').textContent=assMode.toUpperCase();
+  document.getElementById('ass-mode-btn').style.color=assMode==='question'?'var(--grn)':'#8b949e';
+  document.getElementById('ass-mode-btn').style.borderColor=assMode==='question'?'var(--grn)':'#30363d';
+  renderAss();
+}
+function updAssScope(){
+  const active=Q_BANK.filter(q=>qStatus(q)==='active').length;
+  const future=Q_BANK.filter(q=>qStatus(q)==='future').length;
+  const excl=Q_BANK.filter(q=>qStatus(q)==='excluded').length;
+  const badge=document.getElementById('ass-scope-badge');
+  if(badge)badge.innerHTML=`<span style="color:#22c55e">${active} active</span> <span style="color:#f59e0b">${future} future</span>${excl>0?` <span style="color:#ef4444">${excl} excl.</span>`:''}`;
+}
+
+const PHASES=['FEED','Detail Eng','Procurement','Construction','Commission','Handover'];
+const DOMAINS=['Governance','Controls','Delivery'];
+
+// Pre-computed heat-map matrix (deterministic)
+const HM_MATRIX={
+  'Governance':[3.1,2.8,2.6,2.5,2.2,2.0],
+  'Controls':  [2.7,2.9,3.1,2.6,2.2,1.9],
+  'Delivery':  [3.3,3.0,2.8,2.9,2.4,2.1],
+};
+const CAP_HM=[
+  [3.2,3.0,2.8,2.6,2.3,2.0],[2.5,2.4,2.2,2.0,1.8,1.5],[3.0,2.9,2.7,2.5,2.2,1.9],
+  [3.3,3.1,2.9,2.7,2.4,2.1],[2.0,1.9,1.7,1.6,1.4,1.2],[2.8,2.9,3.1,2.5,2.0,1.8],
+  [2.6,2.8,2.9,2.4,2.0,1.8],[3.1,3.0,3.3,2.9,2.5,2.2],
+];
+
+// ── WEIGHTS (interactive) ────────────────────────
+const W={own:35,pmc:40,epc:25};
+// ── PERSPECTIVE SYSTEM ───────────────────────────────
+// persp: 'own' | 'pmc' | 'epc' | 'full'
+let persp='full';
+const PERSP_LABELS={own:'Owner (OWN)',pmc:'PMC / Consultant',epc:'EPC Contractor',full:'Full Platform'};
+const PERSP_COLORS={own:'var(--own)',pmc:'var(--pmc)',epc:'var(--epc)',full:'var(--con)'};
+
+
+function setPerspective(p){
+  persp=p;
+  localStorage.setItem('eep-mmp-v14-persp',p);
+  document.getElementById('persp-modal').style.display='none';
+  // Update badge
+  const badge=document.getElementById('persp-badge');
+  if(badge){
+    badge.style.display=p==='full'?'none':'inline';
+    badge.textContent=PERSP_LABELS[p]||'';
+    badge.style.color=PERSP_COLORS[p];
+    const bgMap={own:'rgba(59,130,246,.15)',pmc:'rgba(168,85,247,.15)',epc:'rgba(59,130,246,.15)',full:'rgba(99,179,237,.15)'};
+    badge.style.background=bgMap[p]||'rgba(255,255,255,.08)';
+    badge.style.borderColor=PERSP_COLORS[p];
+  }
+  // Sync weights panel visibility — hide in single-persp mode
+  const wpBtn=document.getElementById('wp-toggle');
+  if(wpBtn)wpBtn.style.display=p==='full'?'':'none';
+  // Recalculate & re-render
+  CAPS.forEach(derive);
+  updKPIs();updLCT();
+  invalidateCharts();
+  renderAss();
+  const cur=document.querySelector('.ni.active');
+  if(cur){const pg=cur.dataset.pg;
+    if(pg==='mat')renderMat();
+    if(pg==='gap')renderGap();
+    if(pg==='sc')renderSC();
+    if(pg==='hmap')renderHmap();
+  }
+  saveState();
+}
+
+function showPerspModal(){
+  document.getElementById('persp-modal').style.display='flex';
+}
+
+function initPersp(){
+  const saved=localStorage.getItem('eep-mmp-v14-persp');
+  if(saved&&['own','pmc','epc','full'].includes(saved)){
+    setPerspective(saved);
+  } else {
+    // First run — show modal
+    document.getElementById('persp-modal').style.display='flex';
+  }
+}
+
+const EVIDENCE={};   // {capId:{notes,ref}}
+let ACTIONS_DATA=[];  // [{id,title,cap,pri,status,owner,due,notes}]
+
+// Derived fields
+function derive(c){
+  c.cons=persp==="own"?+(c.own).toFixed(2):persp==="pmc"?+(c.pmc).toFixed(2):persp==="epc"?+(c.epc).toFixed(2):+((c.own*(W.own/100)+c.pmc*(W.pmc/100)+c.epc*(W.epc/100))).toFixed(2);
+  c.gap=+(c.tgt-c.cons).toFixed(2);
+  c.pri=c.gap>=2?'crit':c.gap>=1.5?'high':c.gap>=1.0?'med':'low';
+}
+CAPS.forEach(derive);
+
+// ── LOCALSTORAGE ─────────────────────────────────
+function saveState(){
+  try{localStorage.setItem('eep-mmp-v14-phase',projPhase);
+  localStorage.setItem('eep-mmp-v14-val',JSON.stringify(Q_VAL));
+  localStorage.setItem('eep-mmp-v14',JSON.stringify({
+    caps:CAPS.map(c=>({id:c.id,own:c.own,pmc:c.pmc,epc:c.epc})),
+    W,EVIDENCE,ACTIONS_DATA,persp
+  }));}catch(e){}
+  const el=document.getElementById('save-flash');
+  if(el){el.style.opacity='1';setTimeout(()=>el.style.opacity='0',1200);}
+}
+function loadState(){
+  try{
+    const raw=localStorage.getItem('eep-mmp-v14');
+    if(!raw)return;
+    const s=JSON.parse(raw);
+    if(s.caps)s.caps.forEach(sc=>{const c=CAPS.find(x=>x.id===sc.id);if(c){c.own=sc.own;c.pmc=sc.pmc;c.epc=sc.epc;}});
+    if(s.W)Object.assign(W,s.W);
+    if(s.EVIDENCE)Object.assign(EVIDENCE,s.EVIDENCE);
+    if(s.ACTIONS_DATA&&s.ACTIONS_DATA.length)ACTIONS_DATA=s.ACTIONS_DATA;
+    if(s.persp&&['own','pmc','epc','full'].includes(s.persp))persp=s.persp;
+    try{const vs=localStorage.getItem('eep-mmp-v14-val');if(vs)Q_VAL=JSON.parse(vs);}catch(e){}
+    CAPS.forEach(derive);
+    syncWtUI();
+  }catch(e){}
+  const sp=localStorage.getItem('eep-mmp-v14-phase');
+  if(sp&&['PH1','PH2','PH3','PH4','PH5','PH6'].includes(sp)){projPhase=sp;}
+}
+function exportJSON(){
+  const blob=new Blob([JSON.stringify({caps:CAPS.map(c=>({id:c.id,n:c.n,own:c.own,pmc:c.pmc,epc:c.epc,tgt:c.tgt,cons:c.cons,gap:c.gap})),W,EVIDENCE,ACTIONS_DATA,exported:new Date().toISOString()},null,2)],{type:'application/json'});
+  const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(blob),download:'EEP-MMP-Assessment-'+new Date().toISOString().slice(0,10)+'.json'});
+  a.click();
+}
+function importJSON(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const s=JSON.parse(e.target.result);
+      if(s.caps)s.caps.forEach(sc=>{const c=CAPS.find(x=>x.id===sc.id);if(c){c.own=sc.own;c.pmc=sc.pmc;c.epc=sc.epc;}});
+      if(s.W)Object.assign(W,s.W);
+      if(s.EVIDENCE)Object.assign(EVIDENCE,s.EVIDENCE);
+      if(s.ACTIONS_DATA)ACTIONS_DATA=s.ACTIONS_DATA;
+      CAPS.forEach(derive);syncWtUI();updKPIs();invalidateCharts();
+      alert('State restored from file.');
+    }catch(ex){alert('Invalid JSON file.');}
+    input.value='';
+  };
+  reader.readAsText(file);
+}
+
+function avg(arr,k){return +(arr.reduce((s,c)=>s+c[k],0)/arr.length).toFixed(2)}
+
+function getKPIs(){
+  return {
+    own:avg(CAPS,'own'),pmc:avg(CAPS,'pmc'),epc:avg(CAPS,'epc'),
+    cons:avg(CAPS,'cons'),tgt:avg(CAPS,'tgt'),gap:avg(CAPS,'gap'),
+    psp:Math.round(avg(CAPS,'cons')/avg(CAPS,'tgt')*100)
+  };
+}
+
+Chart.defaults.color='#8b949e';
+Chart.defaults.font.family="'Segoe UI',system-ui,sans-serif";
+Chart.defaults.font.size=11;
+
+const CL={
+  own:{l:'#3b82f6',a:'rgba(59,130,246,.15)',b:'rgba(59,130,246,.8)'},
+  pmc:{l:'#f59e0b',a:'rgba(245,158,11,.15)',b:'rgba(245,158,11,.8)'},
+  epc:{l:'#10b981',a:'rgba(16,185,129,.15)',b:'rgba(16,185,129,.8)'},
+  tgt:{l:'#6366f1',a:'rgba(99,102,241,.08)',b:'rgba(99,102,241,.55)'},
+  con:{l:'#a855f7',a:'rgba(168,85,247,.12)',b:'rgba(168,85,247,.75)'},
+};
+
+function radOpts(max=5){
+  return{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max,ticks:{stepSize:1,backdropColor:'transparent',color:'#6e7681',font:{size:8}},grid:{color:'rgba(255,255,255,.05)'},angleLines:{color:'rgba(255,255,255,.07)'},pointLabels:{color:'#8b949e',font:{size:8,weight:'600'}}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${c.raw}`}}}};
+}
+
+// ── NAVIGATION ────────────────────────────────────
+const PG_TITLES={dash:'Executive Dashboard',mat:'Maturity Analysis — 4-Radar View',ass:'Live Assessment Input',sc:'Capacity Scorecard',gap:'Gap Analysis',risk:'Risk Engine',rm:'Roadmap & Timeline',hmap:'Capability Heat Map',intel:'Executive Intelligence',d72:'Decision Forcing — Next 72 Hours',scen:'Scenario Comparison — Act vs Wait',h3:'3-Horizon Improvement Roadmap',roi:'Resource Allocation · ROI Bubble Map',align:'Stakeholder Alignment Analysis',act:'Action Tracker',port:'Portfolio View'};
+document.querySelectorAll('.ni').forEach(n=>{
+  n.addEventListener('click',()=>{
+    const pg=n.dataset.pg;
+    document.querySelectorAll('.ni').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.pg').forEach(x=>x.classList.remove('act'));
+    n.classList.add('active');
+    document.getElementById('pg-'+pg).classList.add('act');
+    document.getElementById('pg-title').textContent=PG_TITLES[pg]||'';
+    if(pg==='dash')renderDash();
+    if(pg==='mat')renderMat();
+    if(pg==='gap')renderGap();
+    if(pg==='risk')renderRisk();
+    if(pg==='rm')renderRM();
+    if(pg==='hmap')renderHmap();
+    if(pg==='intel')renderIntel();
+    if(pg==='sc')renderSC();
+    if(pg==='ass')renderAss();
+    if(pg==='d72')renderD72();
+    if(pg==='scen')renderScen();
+    if(pg==='h3')renderH3();
+    if(pg==='roi')renderROI();
+    if(pg==='align')renderAlign();
+    if(pg==='act')renderAct();
+    if(pg==='port')renderPort();
+  });
+});
+
+// ── UPDATE KPIS ───────────────────────────────────
+function updKPIs(){
+  const K=getKPIs();
+  ['k-own','m-own'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=K.own.toFixed(2)});
+  ['k-pmc','m-pmc'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=K.pmc.toFixed(2)});
+  ['k-epc','m-epc'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=K.epc.toFixed(2)});
+  ['k-psp','psp-n'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=K.psp+'%'});
+  const kg=document.getElementById('k-gap');if(kg)kg.textContent='−'+K.gap.toFixed(2);
+  const mc=document.getElementById('m-con');if(mc)mc.textContent=K.cons.toFixed(2);
+  const mt=document.getElementById('m-tgt');if(mt)mt.textContent=K.tgt.toFixed(2);
+}
+
+// ── DASHBOARD ─────────────────────────────────────
+// Destroy a Chart.js instance on a canvas before re-creating it
+function destroyChart(canvasId){
+  const existing = Chart.getChart(document.getElementById(canvasId));
+  if(existing) existing.destroy();
+}
+
+function renderDash(){
+  const K=getKPIs();
+
+  // Status grid
+  const sg=document.getElementById('status-grid');
+  sg.innerHTML=CAPS.map(c=>{
+    const cls=c.pri==='crit'?'crit':c.pri==='high'?'warn':'ok';
+    const gColor=c.pri==='crit'?'var(--red)':c.pri==='high'?'var(--amb)':'var(--grn)';
+    return`<div class="sc2 ${cls}">
+      <div class="sc-dom">${c.dom}</div>
+      <div class="sc-nm">${c.n}</div>
+      <div style="font-size:10px;color:var(--tx2);margin-bottom:4px">Consensus <strong>${c.cons}</strong> / Target ${c.tgt} · Gap <strong style="color:${gColor}">Δ${c.gap}</strong></div>
+      <div class="sc-row"><span class="sc-tag own-t">OWN ${c.own}</span><span class="sc-tag pmc-t">PMC ${c.pmc}</span><span class="sc-tag epc-t">EPC ${c.epc}</span></div>
+    </div>`;
+  }).join('');
+
+  // Bubble chart
+  destroyChart('bubbleChart');
+  new Chart(document.getElementById('bubbleChart').getContext('2d'),{
+    type:'bubble',
+    data:{datasets:[
+      {label:'Critical',data:CAPS.filter(c=>c.pri==='crit').map(c=>({x:c.cons,y:c.gap,r:Math.max(9,c.gap*13),_n:c.n})),backgroundColor:'rgba(239,68,68,.6)',borderColor:'rgba(239,68,68,.9)'},
+      {label:'High',data:CAPS.filter(c=>c.pri==='high').map(c=>({x:c.cons,y:c.gap,r:Math.max(7,c.gap*10),_n:c.n})),backgroundColor:'rgba(245,158,11,.6)',borderColor:'rgba(245,158,11,.9)'},
+      {label:'Medium',data:CAPS.filter(c=>c.pri==='med').map(c=>({x:c.cons,y:c.gap,r:Math.max(5,c.gap*8),_n:c.n})),backgroundColor:'rgba(99,102,241,.5)',borderColor:'rgba(99,102,241,.8)'},
+      {label:'Low',data:CAPS.filter(c=>c.pri==='low').map(c=>({x:c.cons,y:c.gap,r:Math.max(4,c.gap*6),_n:c.n})),backgroundColor:'rgba(16,185,129,.4)',borderColor:'rgba(16,185,129,.7)'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{x:{min:1,max:5,title:{display:true,text:'Consensus Score',color:'#6e7681'},grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6e7681'}},y:{min:0,max:3.5,title:{display:true,text:'Gap vs Target',color:'#6e7681'},grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6e7681'}}},plugins:{legend:{position:'top',labels:{boxWidth:9,color:'#8b949e',font:{size:9}}},tooltip:{callbacks:{label:c=>{const cap=CAPS.find(x=>Math.abs(x.cons-c.raw.x)<.01);return cap?` ${cap.n}: ${c.raw.x} (Δ${c.raw.y})`:` ${c.raw.x}`}}}}}
+  });
+
+  // Trend chart
+  destroyChart('trendChart');
+  new Chart(document.getElementById('trendChart').getContext('2d'),{
+    type:'line',
+    data:{labels:['Cycle 1','Cycle 2 (Now)','Cycle 3 (Proj)','Cycle 4','Target'],datasets:[
+      {label:'OWN',data:[2.1,K.own,null,3.5,4.0],borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.1)',tension:.3,pointRadius:[4,5,0,4,4],spanGaps:false},
+      {label:'PMC',data:[2.3,K.pmc,null,3.7,4.2],borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.1)',tension:.3,pointRadius:[4,5,0,4,4],spanGaps:false},
+      {label:'EPC',data:[1.8,K.epc,null,3.2,3.8],borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.1)',tension:.3,pointRadius:[4,5,0,4,4],spanGaps:false},
+      {label:'Target',data:[K.tgt,K.tgt,K.tgt,K.tgt,K.tgt],borderColor:'rgba(99,102,241,.5)',borderDash:[6,4],pointRadius:0},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:1,max:5,grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6e7681'}},x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#8b949e'}}},plugins:{legend:{labels:{boxWidth:9,color:'#8b949e',font:{size:9}}}}}
+  });
+
+  // Priority action matrix
+  const pam=document.getElementById('pam');
+  pam.innerHTML=[...CAPS].sort((a,b)=>b.gap-a.gap).slice(0,9).map(c=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid rgba(255,255,255,.03)">
+      <span class="ptag ${c.pri}">${c.pri==='crit'?'CRITICAL':c.pri.toUpperCase()}</span>
+      <span style="flex:1;font-size:11px;color:var(--tx)">${c.n}</span>
+      <span style="font-size:10px;color:var(--tx2)">${c.cons}→${c.tgt}</span>
+      <span style="font-size:10px;font-weight:700;color:${c.pri==='crit'?'var(--red)':c.pri==='high'?'var(--amb)':'var(--grn)'}">Δ${c.gap}</span>
+    </div>`).join('');
+
+  // Domain chart
+  destroyChart('domChart');
+  new Chart(document.getElementById('domChart').getContext('2d'),{
+    type:'bar',
+    data:{labels:DOMAINS,datasets:[
+      {label:'OWN',data:DOMAINS.map(d=>avg(CAPS.filter(c=>c.dom===d),'own')),backgroundColor:'rgba(59,130,246,.7)',borderRadius:4},
+      {label:'PMC',data:DOMAINS.map(d=>avg(CAPS.filter(c=>c.dom===d),'pmc')),backgroundColor:'rgba(245,158,11,.7)',borderRadius:4},
+      {label:'EPC',data:DOMAINS.map(d=>avg(CAPS.filter(c=>c.dom===d),'epc')),backgroundColor:'rgba(16,185,129,.7)',borderRadius:4},
+      {label:'Target',data:DOMAINS.map(d=>avg(CAPS.filter(c=>c.dom===d),'tgt')),backgroundColor:'rgba(99,102,241,.3)',borderRadius:4},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:5,grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6e7681'}},x:{grid:{display:false},ticks:{color:'#8b949e'}}},plugins:{legend:{position:'top',labels:{boxWidth:9,color:'#8b949e',font:{size:9}}}}}
+  });
+}
+
+// ── MATURITY PAGE ─────────────────────────────────
+let matDone=false,gaugeChartInst=null;
+function renderMat(){
+  if(matDone){updLCT();return;}
+  matDone=true;
+  const K=getKPIs();
+  ['m-own','m-pmc','m-epc','m-con','m-tgt'].forEach((id,i)=>{
+    const v=[K.own,K.pmc,K.epc,K.cons,K.tgt][i];
+    const e=document.getElementById(id);if(e)e.textContent=v.toFixed(2);
+  });
+
+  const labs=CAPS.map(c=>c.id);
+  const mkRad=(id,key,color,label)=>{
+    destroyChart(id);
+    new Chart(document.getElementById(id).getContext('2d'),{type:'radar',data:{labels:labs,datasets:[
+      {label,data:CAPS.map(c=>c[key]),backgroundColor:color.a,borderColor:color.b,borderWidth:2,pointRadius:3,pointBackgroundColor:color.l},
+      {label:'Target',data:CAPS.map(c=>c.tgt),backgroundColor:'transparent',borderColor:'rgba(99,102,241,.45)',borderWidth:1.5,borderDash:[5,3],pointRadius:2},
+    ]},options:radOpts()});
+  };
+  mkRad('rOwn','own',CL.own,'OWN');
+  mkRad('rPMC','pmc',CL.pmc,'PMC');
+  mkRad('rEPC','epc',CL.epc,'EPC');
+  destroyChart('rCon');
+  new Chart(document.getElementById('rCon').getContext('2d'),{type:'radar',data:{labels:labs,datasets:[
+    {label:'OWN',   data:CAPS.map(c=>c.own), backgroundColor:'rgba(59,130,246,.08)',borderColor:'#3b82f6',borderWidth:1.5,pointRadius:2},
+    {label:'PMC',   data:CAPS.map(c=>c.pmc), backgroundColor:'rgba(245,158,11,.08)',borderColor:'#f59e0b',borderWidth:1.5,pointRadius:2},
+    {label:'EPC',   data:CAPS.map(c=>c.epc), backgroundColor:'rgba(16,185,129,.08)',borderColor:'#10b981',borderWidth:1.5,pointRadius:2},
+    {label:'Consensus',data:CAPS.map(c=>c.cons),backgroundColor:'rgba(168,85,247,.15)',borderColor:'#a855f7',borderWidth:2.5,pointRadius:3},
+    {label:'Target',data:CAPS.map(c=>c.tgt), backgroundColor:'transparent',borderColor:'rgba(99,102,241,.5)',borderWidth:1.5,borderDash:[5,3],pointRadius:2},
+  ]},options:radOpts()});
+
+  // Capacity scorecard
+  document.getElementById('cap-sc').innerHTML='<div class="sct">'+CAPS.map(c=>`
+    <div class="scr">
+      <div class="scr-n" title="${c.n}">${c.n}</div>
+      <div class="scr-b">
+        <div class="scr-br"><span class="scr-bl">OWN</span><div class="scr-bt"><div class="scr-bf own" style="width:${c.own/5*100}%"></div></div><span style="font-size:8px;color:var(--own);width:22px;text-align:right">${c.own}</span></div>
+        <div class="scr-br"><span class="scr-bl">PMC</span><div class="scr-bt"><div class="scr-bf pmc" style="width:${c.pmc/5*100}%"></div></div><span style="font-size:8px;color:var(--pmc);width:22px;text-align:right">${c.pmc}</span></div>
+        <div class="scr-br"><span class="scr-bl">EPC</span><div class="scr-bt"><div class="scr-bf epc" style="width:${c.epc/5*100}%"></div></div><span style="font-size:8px;color:var(--epc);width:22px;text-align:right">${c.epc}</span></div>
+      </div>
+      <div class="scr-v" style="color:${c.pri==='crit'?'var(--red)':c.pri==='high'?'var(--amb)':'var(--grn)'}">Δ${c.gap}</div>
+    </div>`).join('')+'</div>';
+
+  // Heat map
+  function hmCls(v){return v>=4?'hc5':v>=3?'hc4':v>=2.5?'hc3':v>=1.5?'hc2':'hc1';}
+  let hm=`<table class="hm"><thead><tr><th></th>${PHASES.map(p=>`<th>${p}</th>`).join('')}</tr></thead><tbody>`;
+  DOMAINS.forEach((d,di)=>{
+    hm+=`<tr><td class="hn"><strong>${d}</strong></td>${HM_MATRIX[d].map(v=>`<td><span class="hc ${hmCls(v)}">${v.toFixed(1)}</span></td>`).join('')}</tr>`;
+  });
+  CAPS.slice(0,8).forEach((c,i)=>{
+    hm+=`<tr><td class="hn" style="padding-left:10px">${c.id}: ${c.n.substring(0,14)}</td>${CAP_HM[i].map(v=>`<td><span class="hc ${hmCls(v)}">${v.toFixed(1)}</span></td>`).join('')}</tr>`;
+  });
+  hm+=`</tbody></table>`;
+  document.getElementById('hm-wrap').innerHTML=hm;
+
+  // PSP Gauge
+  const psp=K.psp;
+  const gColor=psp>=75?'#22c55e':psp>=50?'#f59e0b':'#ef4444';
+  destroyChart('pspG');
+  gaugeChartInst=new Chart(document.getElementById('pspG').getContext('2d'),{
+    type:'doughnut',
+    data:{datasets:[{data:[psp,100-psp],backgroundColor:[gColor,'rgba(255,255,255,.05)'],borderWidth:0,circumference:180,rotation:-90}]},
+    options:{responsive:false,maintainAspectRatio:false,cutout:'72%',plugins:{legend:{display:false},tooltip:{enabled:false}}}
+  });
+  document.getElementById('psp-n').textContent=psp+'%';
+  document.getElementById('psp-n').style.color=gColor;
+
+  const pspComps=[
+    {l:'Schedule Adherence',v:71},{l:'Cost Performance',v:65},
+    {l:'Quality Compliance',v:74},{l:'Safety Record',v:88},{l:'Scope Stability',v:58},
+  ];
+  document.getElementById('psp-bars').innerHTML=pspComps.map(p=>`
+    <div class="psp-bar-row">
+      <span class="psp-bar-lbl">${p.l}</span>
+      <div class="psp-bar-track"><div class="psp-bar-fill" style="width:${p.v}%;background:${p.v>=75?'var(--grn)':p.v>=50?'var(--amb)':'var(--red)'}"></div></div>
+      <span class="psp-bar-val" style="color:${p.v>=75?'var(--grn)':p.v>=50?'var(--amb)':'var(--red)'}">${p.v}%</span>
+    </div>`).join('');
+
+  renderLCT();
+}
+
+function renderLCT(){
+  const opts=[1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0];
+  document.getElementById('lct-body').innerHTML=CAPS.map((c,i)=>`
+    <tr>
+      <td><div class="cn">${c.n}</div><div class="dn">${c.dom}</div></td>
+      <td style="text-align:center"><select class="ss own" data-i="${i}" data-k="own" onchange="onScore(this)">${opts.map(v=>`<option value="${v}"${c.own===v?' selected':''}>${v}</option>`).join('')}</select></td>
+      <td style="text-align:center"><select class="ss pmc" data-i="${i}" data-k="pmc" onchange="onScore(this)">${opts.map(v=>`<option value="${v}"${c.pmc===v?' selected':''}>${v}</option>`).join('')}</select></td>
+      <td style="text-align:center"><select class="ss epc" data-i="${i}" data-k="epc" onchange="onScore(this)">${opts.map(v=>`<option value="${v}"${c.epc===v?' selected':''}>${v}</option>`).join('')}</select></td>
+      <td class="conc" id="lc-c${i}">${c.cons}</td>
+      <td class="gapc ${c.pri}" id="lc-g${i}">Δ${c.gap}</td>
+    </tr>`).join('');
+}
+
+function updLCT(){
+  CAPS.forEach((c,i)=>{
+    const ce=document.getElementById('lc-c'+i),ge=document.getElementById('lc-g'+i);
+    if(ce)ce.textContent=c.cons;
+    if(ge){ge.textContent='Δ'+c.gap;ge.className='gapc '+c.pri;}
+  });
+}
+
+function onScore(sel){
+  const i=+sel.dataset.i,k=sel.dataset.k;
+  CAPS[i][k]=+sel.value;
+  derive(CAPS[i]);
+  const ce=document.getElementById('lc-c'+i),ge=document.getElementById('lc-g'+i);
+  if(ce)ce.textContent=CAPS[i].cons;
+  if(ge){ge.textContent='Δ'+CAPS[i].gap;ge.className='gapc '+CAPS[i].pri;}
+  saveState();
+}
+
+function activePg(){
+  const el=document.querySelector('.pg.act');
+  return el?el.id.replace('pg-',''):'';
+}
+
+function recalc(){
+  updKPIs();
+  updLCT();
+  // Refresh the active page so charts stay in sync with score changes
+  const pg=activePg();
+  if(pg==='dash'){renderDash();}
+  else if(pg==='mat'){matDone=false;renderMat();}
+  else if(pg==='gap'){gapDone=false;renderGap();}
+  else if(pg==='risk'){riskDone=false;renderRisk();}
+  else if(pg==='hmap'){renderHmap();}
+  else if(pg==='sc'){scDone=false;renderSC();}
+}
+
+// ── ASSESSMENT ────────────────────────────────────
+let activeTab='gov';
+function switchTab(t,btn){
+  activeTab=t;
+  document.querySelectorAll('.tbb').forEach(b=>b.classList.remove('act'));
+  if(btn)btn.classList.add('act');
+  renderAss();
+}
+function renderAss(){
+  updAssScope();
+  if(assMode==='question'){renderAssQuestions();return;}
+  const domMap={gov:'Governance',con:'Controls',del:'Delivery'};
+  const caps=CAPS.filter(c=>c.dom===domMap[activeTab]);
+  const opts=[1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0];
+  const conflicts=persp!=='full'?[]:CAPS.filter(c=>{
+    const op=Math.abs(c.own-c.pmc),oe=Math.abs(c.own-c.epc),pe=Math.abs(c.pmc-c.epc);
+    return Math.max(op,oe,pe)>=1.5;
+  });
+  const banner=persp!=='full'?'':conflicts.length>0
+    ?`<div style="background:rgba(239,68,68,.1);border:1px solid var(--red);border-radius:8px;padding:12px 16px;margin-bottom:14px;display:flex;gap:12px;align-items:flex-start">
+        <span style="font-size:16px;line-height:1.2">⚠</span>
+        <div style="flex:1">
+          <div style="color:var(--red);font-weight:700;font-size:11px;letter-spacing:.05em;margin-bottom:6px">${conflicts.length} PERSPECTIVE CONFLICT${conflicts.length>1?'S':''} — divergence ≥ 1.5 between scoring perspectives</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">${conflicts.map(c=>{
+            const md=Math.max(Math.abs(c.own-c.pmc),Math.abs(c.own-c.epc),Math.abs(c.pmc-c.epc));
+            return`<span style="background:var(--red);color:#fff;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700">${c.n} Δ${md.toFixed(1)}</span>`;
+          }).join('')}</div>
+        </div>
+      </div>`
+    :`<div style="background:rgba(34,197,94,.08);border:1px solid var(--grn);border-radius:8px;padding:9px 14px;margin-bottom:14px;color:var(--grn);font-size:11px;font-weight:600">✓ No perspective conflicts — all divergences within acceptable range (&lt; 1.5)</div>`;
+  document.getElementById('ass-content').innerHTML=banner+`
+  <div class="card"><div class="cb0">
+    <table class="gt">
+      <thead><tr><th>Capability</th>${persp==='full'||persp==='own'?'<th style="color:var(--own)">OWN</th>':''}${persp==='full'||persp==='pmc'?'<th style="color:var(--pmc)">PMC</th>':''}${persp==='full'||persp==='epc'?'<th style="color:var(--epc)">EPC</th>':''}<th>Target</th><th style="color:var(--con)">Consensus</th><th>Gap Δ</th><th>Priority</th><th title="Evidence Validation">Evidence</th>${persp==='full'?'<th title="Max perspective divergence">⚡ Div</th>':''}</tr></thead>
+      <tbody>${caps.map(c=>{
+        const gi=CAPS.indexOf(c);
+        const op=Math.abs(c.own-c.pmc),oe=Math.abs(c.own-c.epc),pe=Math.abs(c.pmc-c.epc);
+        const md=Math.max(op,oe,pe);
+        const dc=md>=1.5?'var(--red)':md>=1.0?'var(--amb)':'var(--grn)';
+        const di=md>=1.5?'⚠':md>=1.0?'◑':'✓';
+        const capQs=Q_BANK.filter(q=>DOM_CAP[q.dom]===c.id);
+        const qAct=capQs.filter(q=>qStatus(q)==='active').length;
+        const qFut=capQs.filter(q=>qStatus(q)==='future').length;
+        const qExcl=capQs.filter(q=>qStatus(q)==='excluded').length;
+        const qBadge=capQs.length>0?`<br><span style="font-size:9px;color:#8b949e">${qAct>0?'<span style=\'color:#22c55e\'>'+qAct+' active</span> ':''}${qFut>0?'<span style=\'color:#f59e0b\'>'+qFut+' future</span> ':''}${qExcl>0?'<span style=\'color:#ef4444\'>'+qExcl+' excl.</span>':''}</span>`:'';
+        return`<tr style="${md>=1.5?'border-left:3px solid var(--red)':''}">
+          <td><strong style="font-size:11px">${c.n}</strong><br><span style="font-size:9px;color:var(--tx3)">${c.id}</span>${qBadge}`+function(){const s=capValSummary(c.id);return s.total>0?`<br><span class="val-badge ${s.validated===s.total&&s.total>0?'val-done':s.pct>0?'val-pending':'val-draft'}">${s.validated===s.total&&s.total>0?'[OK]':'[...]'} ${s.pct}% evidence · ${s.validated}/${s.total} validated</span>`:'';
+}()+`</td>
+          ${(persp==='full'||persp==='own')?`<td style="text-align:center"><select class="ss own" data-i="${gi}" data-k="own" onchange="onScore(this);recalc()">${opts.map(v=>`<option value="${v}"${c.own===v?' selected':''}>${v}</option>`).join('')}</select></td>`:''}${(persp==='full'||persp==='pmc')?`<td style="text-align:center"><select class="ss pmc" data-i="${gi}" data-k="pmc" onchange="onScore(this);recalc()">${opts.map(v=>`<option value="${v}"${c.pmc===v?' selected':''}>${v}</option>`).join('')}</select></td>`:''}${(persp==='full'||persp==='epc')?`<td style="text-align:center"><select class="ss epc" data-i="${gi}" data-k="epc" onchange="onScore(this);recalc()">${opts.map(v=>`<option value="${v}"${c.epc===v?' selected':''}>${v}</option>`).join('')}</select></td>`:''}
+          <td style="text-align:center;color:var(--tgt);font-weight:700">${c.tgt}</td>
+          <td class="conc" id="a-c${gi}">${c.cons}</td>
+          <td class="gapc ${c.pri}" id="a-g${gi}">Δ${c.gap}</td>
+          <td><span class="ptag ${c.pri}">${c.pri.toUpperCase()}</span></td>
+          <td style="text-align:center"><button onclick="openEvidencePanel('${c.id}')" style="background:none;border:1px solid #30363d;border-radius:4px;color:#8b949e;font-size:10px;padding:3px 7px;cursor:pointer;white-space:nowrap" title="Attach Evidence &amp; Validate">📎 Evidence</button></td>
+          ${persp==='full'?'<td style="text-align:center;color:'+dc+';font-weight:700;font-size:12px" title="OWN↔PMC:'+op.toFixed(1)+' OWN↔EPC:'+oe.toFixed(1)+' PMC↔EPC:'+pe.toFixed(1)+'">'+di+' '+md.toFixed(1)+'</td>':''}
+        </tr>`}).join('')}
+      </tbody>
+    </table>
+  </div></div>`;
+}
+
+function renderAssQuestions(){
+  const domMap={gov:'Governance',con:'Controls',del:'Delivery'};
+  const caps=CAPS.filter(c=>c.dom===domMap[activeTab]);
+  const perspN={full:'All Perspectives',own:'Owner',pmc:'PMC/Consultant',epc:'EPC Contractor'}[persp];
+  const perspC={full:'var(--con)',own:'var(--own)',pmc:'var(--pmc)',epc:'var(--epc)'}[persp];
+  const phaseN={PH1:'PH1 Initiation',PH2:'PH2 FEED',PH3:'PH3 Tendering',PH4:'PH4 Execution',PH5:'PH5 Commissioning',PH6:'PH6 Close-Out'}[projPhase];
+
+  let allActive=0,allFuture=0,allExcl=0;
+  Q_BANK.forEach(q=>{const s=qStatus(q);if(s==='active')allActive++;else if(s==='future')allFuture++;else allExcl++;});
+
+  let html=`<div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+    <div style="font-size:11px"><span style="color:#8b949e">Perspective: </span><strong style="color:${perspC}">${perspN}</strong></div>
+    <div style="font-size:11px"><span style="color:#8b949e">Phase: </span><strong style="color:var(--acc)">${phaseN}</strong></div>
+    <div style="font-size:11px"><span style="color:#22c55e;font-weight:700">${allActive}</span><span style="color:#8b949e"> active</span></div>
+    <div style="font-size:11px"><span style="color:#f59e0b;font-weight:700">${allFuture}</span><span style="color:#8b949e"> future</span></div>
+    ${allExcl>0?`<div style="font-size:11px"><span style="color:#ef4444;font-weight:700">${allExcl}</span><span style="color:#8b949e"> excluded from scope</span></div>`:''}
+    <div style="margin-left:auto;font-size:10px;color:#8b949e;font-style:italic">● Active = answer now  ◑ Future = phase not reached  ○ Excluded = outside scope</div>
+  </div>`;
+
+  for(const cap of caps){
+    const capQs=Q_BANK.filter(q=>DOM_CAP[q.dom]===cap.id);
+    if(capQs.length===0)continue;
+    const a=capQs.filter(q=>qStatus(q)==='active');
+    const f=capQs.filter(q=>qStatus(q)==='future');
+    const e=capQs.filter(q=>qStatus(q)==='excluded');
+
+    html+=`<div class="cap-q-group">
+      <div class="cap-q-hdr" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+        <span class="cap-q-hdr-id">${cap.id}</span>
+        <span class="cap-q-hdr-title">${cap.n}</span>
+        <span class="cap-q-counts">
+          ${a.length>0?`<span class="cqc cqc-a">${a.length} active</span>`:''}
+          ${f.length>0?`<span class="cqc cqc-f">${f.length} future</span>`:''}
+          ${e.length>0?`<span class="cqc cqc-e">${e.length} excl.</span>`:''}
+        </span>
+        <span style="color:#8b949e;font-size:12px;margin-left:6px">▾</span>
+      </div>
+      <div class="cap-q-body">
+        <div class="cap-score-row">
+          <span>Capability Score:</span>
+          ${persp==='full'||persp==='own'?`<span style="color:var(--own)">OWN</span><select class="ss own" data-i="${CAPS.indexOf(cap)}" data-k="own" onchange="onScore(this);recalc()">${[1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0].map(v=>`<option value="${v}"${cap.own===v?' selected':''}>${v}</option>`).join('')}</select>`:''}
+          ${persp==='full'||persp==='pmc'?`<span style="color:var(--pmc)">PMC</span><select class="ss pmc" data-i="${CAPS.indexOf(cap)}" data-k="pmc" onchange="onScore(this);recalc()">${[1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0].map(v=>`<option value="${v}"${cap.pmc===v?' selected':''}>${v}</option>`).join('')}</select>`:''}
+          ${persp==='full'||persp==='epc'?`<span style="color:var(--epc)">EPC</span><select class="ss epc" data-i="${CAPS.indexOf(cap)}" data-k="epc" onchange="onScore(this);recalc()">${[1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0].map(v=>`<option value="${v}"${cap.epc===v?' selected':''}>${v}</option>`).join('')}</select>`:''}
+          <span style="margin-left:8px;color:var(--con);font-weight:700" id="aqc-${CAPS.indexOf(cap)}">Consensus: ${cap.cons}</span>
+          <span class="gapc ${cap.pri}" style="margin-left:6px" id="aqg-${CAPS.indexOf(cap)}">Δ${cap.gap}</span>
+        </div>
+        ${[...a,...f,...e].map(q=>{
+          const st=qStatus(q);
+          const valBdg=st==='active'?qValBadge(q.id):'';
+          const pill=st==='active'?`<span class="q-ass-status qst-active">● ACTIVE</span> ${valBdg}`
+                    :st==='future'?'<span class="q-ass-status qst-future">◑ FUTURE</span>'
+                    :'<span class="q-ass-status" style="background:rgba(239,68,68,.1);color:#ef4444;border-color:rgba(239,68,68,.3);font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;border:1px solid">○ EXCL.</span>';
+          const excNote=st==='excluded'?`<span style="color:#ef4444;font-size:9px"> — not in ${persp.toUpperCase()} scope</span>`:
+                        st==='future'?`<span style="color:#f59e0b;font-size:9px"> — phase ${q.phases[q.phases.length-1]} not yet reached</span>`:'';
+          const ownTag=q.own?'<span class="q-ass-tag qtag-own">OWN</span>':'';
+          const epcTag=q.epc?'<span class="q-ass-tag qtag-epc">EPC</span>':'';
+          return`<div class="q-ass-card st-${st}" style="${st==='excluded'?'display:flex;opacity:.4':''}">
+            <div class="q-ass-id">${q.id}</div>
+            <div class="q-ass-body">
+              ${q.text}${excNote}
+              <div class="q-ass-tags">
+                <span class="q-ass-tag qtag-dom">${q.dom}</span>
+                <span class="q-ass-tag qtag-ph">${q.phases.join('·')}</span>
+                ${ownTag}${(()=>{const r=qPmcRole(q);return r?`<span class="q-ass-tag" style="background:${r==='Active'?'rgba(63,185,80,.12)':'rgba(245,158,11,.1)'};color:${r==='Active'?'#3fb950':'#f59e0b'};border-color:${r==='Active'?'rgba(63,185,80,.3)':'rgba(245,158,11,.25)'};font-size:8.5px">PMC·${r}</span>`:''})()}${epcTag}
+              </div>
+            </div>
+            ${pill}
+            ${st==='active'?renderQEvidencePanel(q.id, cap[persp==='full'?'own':persp]||3):''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+  document.getElementById('ass-content').innerHTML=html;
+}
+
+// ── SCORECARD PAGE ────────────────────────────────
+let scDone=false;
+function renderSC(){
+  if(scDone)return;scDone=true;
+  destroyChart('scChart');
+  new Chart(document.getElementById('scChart').getContext('2d'),{
+    type:'bar',
+    data:{labels:CAPS.map(c=>c.id),datasets:[
+      {label:'OWN',   data:CAPS.map(c=>c.own), backgroundColor:'rgba(59,130,246,.75)',borderRadius:3},
+      {label:'PMC',   data:CAPS.map(c=>c.pmc), backgroundColor:'rgba(245,158,11,.75)',borderRadius:3},
+      {label:'EPC',   data:CAPS.map(c=>c.epc), backgroundColor:'rgba(16,185,129,.75)',borderRadius:3},
+      {label:'Target',data:CAPS.map(c=>c.tgt), backgroundColor:'rgba(99,102,241,.3)',borderRadius:3,borderColor:'rgba(99,102,241,.7)',borderWidth:1},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:5,grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6e7681'}},x:{grid:{display:false},ticks:{color:'#8b949e',font:{size:9}}}},plugins:{legend:{position:'top',labels:{boxWidth:9,color:'#8b949e',font:{size:9}}}}}
+  });
+}
+
+// ── GAP ───────────────────────────────────────────
+let gapDone=false;
+function renderGap(){
+  if(gapDone)return;gapDone=true;
+  const crit=CAPS.filter(c=>c.pri==='crit').length,hi=CAPS.filter(c=>c.pri==='high').length,me=CAPS.filter(c=>c.pri==='med').length;
+  document.getElementById('g-crit').textContent=crit;
+  document.getElementById('g-high').textContent=hi;
+  document.getElementById('g-med').textContent=me;
+  document.getElementById('g-avg').textContent=avg(CAPS,'gap').toFixed(2);
+  const sorted=[...CAPS].sort((a,b)=>b.gap-a.gap);
+
+  destroyChart('gWF');
+  new Chart(document.getElementById('gWF').getContext('2d'),{type:'bar',data:{labels:sorted.map(c=>c.id),datasets:[{label:'Gap vs Target',data:sorted.map(c=>c.gap),backgroundColor:sorted.map(c=>c.pri==='crit'?'rgba(239,68,68,.75)':c.pri==='high'?'rgba(245,158,11,.75)':c.pri==='med'?'rgba(99,102,241,.65)':'rgba(16,185,129,.65)'),borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:3.5,grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6e7681'}},x:{grid:{display:false},ticks:{color:'#8b949e',font:{size:9}}}},plugins:{legend:{display:false}}}});
+
+  destroyChart('gDist');
+  new Chart(document.getElementById('gDist').getContext('2d'),{type:'doughnut',data:{labels:['Critical (Δ≥2.0)','High (1.5–2.0)','Medium (1.0–1.5)','Low (<1.0)'],datasets:[{data:[crit,hi,me,CAPS.length-crit-hi-me],backgroundColor:['rgba(239,68,68,.75)','rgba(245,158,11,.75)','rgba(99,102,241,.65)','rgba(16,185,129,.65)'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{color:'#8b949e',font:{size:9},boxWidth:9,padding:8}}}}});
+
+  document.getElementById('gap-tbl').innerHTML=`<thead><tr><th>Capability</th><th>Domain</th><th style="color:var(--own)">OWN</th><th style="color:var(--pmc)">PMC</th><th style="color:var(--epc)">EPC</th><th style="color:var(--con)">Consensus</th><th>Target</th><th>Gap Δ</th><th>Priority</th></tr></thead><tbody>${sorted.map(c=>`<tr><td style="font-weight:600;color:var(--tx)">${c.n}</td><td style="color:var(--tx2)">${c.dom}</td><td style="color:var(--own);text-align:center;font-weight:600">${c.own}</td><td style="color:var(--pmc);text-align:center;font-weight:600">${c.pmc}</td><td style="color:var(--epc);text-align:center;font-weight:600">${c.epc}</td><td style="color:var(--con);text-align:center;font-weight:700">${c.cons}</td><td style="color:var(--tgt);text-align:center;font-weight:600">${c.tgt}</td><td style="text-align:center;font-weight:700;color:${c.pri==='crit'?'var(--red)':c.pri==='high'?'var(--amb)':'var(--grn)'}">Δ${c.gap}</td><td><span class="ptag ${c.pri}">${c.pri.toUpperCase()}</span></td></tr>`).join('')}</tbody>`;
+}
+
+// ── RISK ──────────────────────────────────────────
+let riskDone=false;
+function renderRisk(){
+  if(riskDone)return;riskDone=true;
+  destroyChart('riskRad');
+  new Chart(document.getElementById('riskRad').getContext('2d'),{type:'radar',data:{labels:DOMAINS,datasets:[
+    {label:'Risk Exposure',data:[3.1,3.5,2.8],backgroundColor:'rgba(239,68,68,.2)',borderColor:'#ef4444',borderWidth:2,pointRadius:4},
+    {label:'Impact Score', data:[2.9,3.2,2.5],backgroundColor:'rgba(245,158,11,.15)',borderColor:'#f59e0b',borderWidth:1.5,pointRadius:3},
+    {label:'Probability',  data:[2.5,2.8,2.2],backgroundColor:'rgba(99,102,241,.15)',borderColor:'#6366f1',borderWidth:1.5,pointRadius:3},
+  ]},options:radOpts(5)});
+
+  const risks=[
+    {l:'hi',icon:'🔴',t:'Schedule Slippage Risk',d:'Construction tracking 3+ weeks behind. Change Management at L2.0 creates systemic delay exposure across 4 delivery packages.'},
+    {l:'hi',icon:'🔴',t:'Cost Overrun Exposure',d:'Cost Control gap (Δ1.97) with Performance Analytics at L2.6 — real-time variance detection is insufficient for current burn rate.'},
+    {l:'md',icon:'🟡',t:'Commissioning Readiness',d:'Commissioning capability L2.4 vs target L4.0. Knowledge transfer plan, witness test program, and punch list system all required.'},
+    {l:'md',icon:'🟡',t:'Innovation Adoption Gap',d:'Innovation & Tech at L1.9 — the lowest score across all 17 capabilities. Digital delivery risk in engineering phase escalating.'},
+    {l:'lo',icon:'🟢',t:'Sustainability Compliance',d:'Sustainability at L2.2 requires early monitoring framework for regulatory alignment. Manageable with structured plan.'},
+  ];
+  document.getElementById('risk-reg').innerHTML=risks.map(r=>`<div class="ri ${r.l}"><div class="ri-icon">${r.icon}</div><div><div class="ri-ttl">${r.t}</div><div class="ri-desc">${r.d}</div></div></div>`).join('');
+}
+
+// ── ROADMAP ───────────────────────────────────────
+let rmDone=false;
+function renderRM(){
+  if(rmDone)return;rmDone=true;
+  const phases=[
+    {n:'01',nm:'Baseline Assessment',dt:'Mar 2026',s:'done'},
+    {n:'02',nm:'Gap Analysis & Prioritization',dt:'Apr 2026',s:'done'},
+    {n:'03',nm:'Improvement Planning',dt:'May–Jun 2026',s:'curr'},
+    {n:'04',nm:'Implementation Cycle 1',dt:'Jul–Sep 2026',s:'next'},
+    {n:'05',nm:'Mid-Program Review',dt:'Oct 2026',s:'next'},
+    {n:'06',nm:'Target Maturity Validation',dt:'Jan 2027',s:'next'},
+  ];
+  document.getElementById('tl-phases').innerHTML=phases.map(p=>`<div class="tl-ph ${p.s}"><div class="tl-num">PHASE ${p.n}</div><div class="tl-nm">${p.nm}</div><div class="tl-dt">${p.dt}</div></div>`).join('');
+
+  const inits=[
+    {n:'Change Management Program',imp:'crit',cap:'CH',wk:12,desc:'Structured CM framework across all EPC contracts'},
+    {n:'Innovation & Digital Platform',imp:'crit',cap:'IN',wk:16,desc:'BIM/digital twin adoption roadmap'},
+    {n:'Performance Analytics Suite',imp:'high',cap:'PE',wk:14,desc:'Real-time EVM and KPI dashboard'},
+    {n:'Sustainability Framework',imp:'med',cap:'SU',wk:8,desc:'Regulatory alignment and ESG monitoring'},
+    {n:'Commissioning Excellence',imp:'med',cap:'CM',wk:10,desc:'Readiness checklists and witness test programme'},
+  ];
+  document.getElementById('rm-init').innerHTML=inits.map(i=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span class="ptag ${i.imp}">${i.imp.toUpperCase()}</span><div style="flex:1"><div style="font-size:11px;font-weight:600;color:var(--tx)">${i.n}</div><div style="font-size:9px;color:var(--tx3)">${i.cap} · ${i.wk} weeks · ${i.desc}</div></div></div>`).join('');
+
+  destroyChart('msChart');
+  new Chart(document.getElementById('msChart').getContext('2d'),{type:'bar',data:{labels:['PM','RC','SC','CO','SH','CH','IN','SU'],datasets:[
+    {label:'Current', data:[3.2,2.4,3.0,2.8,2.6,2.3,1.9,2.2],backgroundColor:'rgba(59,130,246,.7)',borderRadius:4},
+    {label:'6M Target',data:[3.8,3.2,3.5,3.5,3.5,3.2,2.8,3.0],backgroundColor:'rgba(245,158,11,.6)',borderRadius:4},
+    {label:'Program Target',data:[4.0,4.5,4.0,4.5,4.5,4.5,4.0,4.5],backgroundColor:'rgba(99,102,241,.35)',borderRadius:4},
+  ]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:5,grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6e7681'}},x:{grid:{display:false},ticks:{color:'#8b949e',font:{size:9}}}},plugins:{legend:{position:'bottom',labels:{boxWidth:9,color:'#8b949e',font:{size:9}}}}}});
+}
+
+// ── INTEL ─────────────────────────────────────────
+let intelDone=false;
+function renderIntel(){
+  if(intelDone)return;intelDone=true;
+  const K=getKPIs();
+  document.getElementById('intel-sum').innerHTML=`
+    <div style="margin-bottom:14px">
+      <div style="font-size:13px;font-weight:700;color:var(--tx);margin-bottom:8px">Program Status: <span style="color:var(--amb)">AMBER — IMPROVEMENT REQUIRED</span></div>
+      <div style="font-size:11px;color:var(--tx2);line-height:1.7">
+        PRJ-001 consensus maturity: <strong style="color:var(--tx)">${K.cons}</strong>/5.0 vs target <strong style="color:var(--tgt)">${K.tgt}</strong>/5.0. Gap <strong style="color:var(--red)">Δ${K.gap}</strong> across 17 capabilities. PSP: <strong style="color:${K.psp>=75?'var(--grn)':K.psp>=50?'var(--amb)':'var(--red)'}">${K.psp}%</strong>.
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div style="background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:10px">
+        <div style="font-size:10px;font-weight:700;color:var(--red);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Critical Gaps</div>
+        ${CAPS.filter(c=>c.pri==='crit').map(c=>`<div style="font-size:9px;color:var(--tx2);margin-bottom:2px">• ${c.n} <span style="color:var(--red)">(Δ${c.gap})</span></div>`).join('')}
+      </div>
+      <div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:6px;padding:10px">
+        <div style="font-size:10px;font-weight:700;color:var(--grn);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Relative Strengths</div>
+        ${[...CAPS].sort((a,b)=>a.gap-b.gap).slice(0,5).map(c=>`<div style="font-size:9px;color:var(--tx2);margin-bottom:2px">• ${c.n} <span style="color:var(--grn)">(${c.cons}/${c.tgt})</span></div>`).join('')}
+      </div>
+    </div>`;
+
+  destroyChart('epeiRad');
+  new Chart(document.getElementById('epeiRad').getContext('2d'),{type:'radar',data:{labels:['Governance','Controls','Delivery','Process Maturity','Data Quality','Change Readiness'],datasets:[
+    {label:'EPEI Score',data:[avg(CAPS.filter(c=>c.dom==='Governance'),'cons'),avg(CAPS.filter(c=>c.dom==='Controls'),'cons'),avg(CAPS.filter(c=>c.dom==='Delivery'),'cons'),2.8,3.1,2.5],backgroundColor:'rgba(168,85,247,.15)',borderColor:'#a855f7',borderWidth:2,pointRadius:4},
+    {label:'Benchmark',data:[3.8,3.5,3.9,3.5,3.7,3.3],backgroundColor:'transparent',borderColor:'rgba(255,255,255,.18)',borderWidth:1.5,borderDash:[5,3],pointRadius:2},
+  ]},options:radOpts()});
+
+  document.getElementById('rec-act').innerHTML=[
+    {pri:'crit',cap:'Change Management',   act:'Deploy structured CM framework across all EPC work packages',          tl:'0–4 weeks'},
+    {pri:'crit',cap:'Innovation & Tech',   act:'Establish digital delivery platform and BIM/digital twin roadmap',    tl:'0–8 weeks'},
+    {pri:'high',cap:'Schedule Control',    act:'Implement EVM and 3-week lookahead programme',                        tl:'1–4 weeks'},
+    {pri:'high',cap:'Cost Control',        act:'Deploy real-time cost tracking with automated variance alerts',       tl:'2–6 weeks'},
+    {pri:'high',cap:'Sustainability',      act:'Develop ESG monitoring framework for regulatory compliance',          tl:'4–8 weeks'},
+    {pri:'med', cap:'Commissioning',       act:'Create commissioning readiness checklist and witness test programme', tl:'6–12 weeks'},
+  ].map(a=>`<div style="display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span class="ptag ${a.pri}">${a.pri.toUpperCase()}</span><div style="flex:1"><div style="font-size:11px;font-weight:600;color:var(--tx);margin-bottom:2px">${a.cap}</div><div style="font-size:10px;color:var(--tx2)">${a.act}</div></div><span style="font-size:9px;color:var(--tx3);white-space:nowrap;flex-shrink:0">${a.tl}</span></div>`).join('');
+}
+
+// ── DECISION FORCING (72h) ────────────────────────
+let d72Done=false;
+function renderD72(){
+  if(d72Done)return;d72Done=true;
+  const decisions=[
+    {h:4,  owner:'Project Director',   cat:'Governance',sev:'crit',impact:'Schedule & Budget',
+     title:'Approve Change Management Vendor Selection',
+     context:'3 shortlisted vendors need GO/NO-GO today. Each week of delay costs ~$180K in idle contractor time across 4 work packages.',
+     consequence:'Change orders accumulate uncontrolled. EPC packages diverge. Rework estimate: 2,200+ man-hours.',
+     action:'Issue vendor LOI today. Procurement to execute NDA and mobilise within 48 hours.'},
+    {h:12, owner:'Engineering Lead',   cat:'Controls',  sev:'high', impact:'Scope & Cost',
+     title:'Freeze Engineering Deliverables Register',
+     context:'23 unresolved scope items valued at $2.1M. Without freeze, procurement cannot issue MRQs for 6 long-lead equipment items.',
+     consequence:'16–24 week lead-time items missed, triggering schedule domino affecting critical-path activities.',
+     action:'Engineering manager to sign off register. Issue to PMC and EPC for concurrence by end of tomorrow.'},
+    {h:24, owner:'OWN Commercial',     cat:'Controls',  sev:'high', impact:'Cost',
+     title:'Authorise Contingency Release Protocol',
+     context:'Cost Control at L2.8. No formal contingency release procedure. $4.5M contingency at risk of uncontrolled drawdown.',
+     consequence:'Without thresholds, any cost event can deplete contingency with no executive visibility or approval gate.',
+     action:'Commercial Director to issue Contingency Release Matrix. CFO approval required for drawdowns >$250K.'},
+    {h:36, owner:'PMC Programme Mgr', cat:'Delivery',  sev:'high', impact:'Schedule',
+     title:'Confirm Construction Mobilisation Readiness',
+     context:'Construction starts in 8 weeks. Site readiness, permit status, and labour plan all require formal GO confirmation.',
+     consequence:'Each week of mobilisation slippage delays critical-path by factor of 1:1.4 due to resource interdependencies.',
+     action:'Issue Site Readiness Checklist. Confirm permits, welfare provision, and subcontractor award status.'},
+    {h:48, owner:'HSE Manager',        cat:'Delivery',  sev:'med',  impact:'Safety / Compliance',
+     title:'Issue Pre-Construction HSE Induction Programme',
+     context:'340 personnel require documented induction before site access. HSE at L3.5 but induction schedule unconfirmed.',
+     consequence:'Regulatory non-compliance. Local OSHA equivalent requires documented induction as precondition to mobilisation.',
+     action:'HSE to publish induction schedule and confirm competency assessment slots with all subcontractors.'},
+    {h:72, owner:'IT & Data Lead',     cat:'Analytics', sev:'med',  impact:'Controls',
+     title:'Deploy Performance Analytics Environment',
+     context:'Performance Analytics at L2.6, target L4.5. Current KPI reporting is manual with 2-week lag — blind to live variance.',
+     consequence:'Cost and schedule variance undetected for 2-week windows during the highest-risk phase of the programme.',
+     action:'IT to provision analytics environment. PMC to confirm KPI data feeds and dashboard access permissions.'},
+  ];
+
+  const sevC={crit:'var(--red)',high:'var(--amb)',med:'#a5b4fc'};
+  const sevBg={crit:'rgba(239,68,68,.07)',high:'rgba(245,158,11,.06)',med:'rgba(99,102,241,.06)'};
+  const sevBd={crit:'rgba(239,68,68,.28)',high:'rgba(245,158,11,.28)',med:'rgba(99,102,241,.28)'};
+  const hLabel=h=>h<=4?'TODAY':h+'H';
+
+  document.getElementById('d72-cards').innerHTML=decisions.map(d=>`
+    <div style="background:${sevBg[d.sev]};border:1px solid ${sevBd[d.sev]};border-left:4px solid ${sevC[d.sev]};border-radius:8px;padding:14px 16px">
+      <div style="display:flex;align-items:flex-start;gap:14px">
+        <div style="flex-shrink:0;text-align:center;min-width:54px;padding-top:2px">
+          <div style="font-size:18px;font-weight:800;color:${sevC[d.sev]};line-height:1">${hLabel(d.h)}</div>
+          <div style="font-size:8px;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;margin-top:2px">deadline</div>
+        </div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+            <span class="ptag ${d.sev}">${d.sev.toUpperCase()}</span>
+            <span style="font-size:9px;color:var(--tx3)">${d.cat}</span>
+            <span style="font-size:9px;color:var(--tx3)">· Owner: <strong style="color:var(--tx2)">${d.owner}</strong></span>
+            <span style="margin-left:auto;font-size:9px;padding:1px 7px;border-radius:3px;background:rgba(255,255,255,.05);color:var(--tx3);border:1px solid var(--bd)">${d.impact}</span>
+          </div>
+          <div style="font-size:12px;font-weight:700;color:var(--tx);margin-bottom:8px">${d.title}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;font-size:10px;color:var(--tx2)">
+            <div><div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);margin-bottom:3px">Context</div>${d.context}</div>
+            <div><div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--red);margin-bottom:3px">If Delayed</div>${d.consequence}</div>
+            <div><div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--grn);margin-bottom:3px">Required Action</div>${d.action}</div>
+          </div>
+        </div>
+      </div>
+    </div>`).join('');
+
+  new Chart(document.getElementById('d72-matrix').getContext('2d'),{
+    type:'scatter',
+    data:{datasets:decisions.map((d,i)=>({
+      label:d.title,
+      data:[{x:(1-d.h/72)*5, y:[5,4,4,4,3,3][i]}],
+      backgroundColor:d.sev==='crit'?'rgba(239,68,68,.7)':d.sev==='high'?'rgba(245,158,11,.7)':'rgba(99,102,241,.65)',
+      borderColor:d.sev==='crit'?'#ef4444':d.sev==='high'?'#f59e0b':'#6366f1',
+      pointRadius:13,pointHoverRadius:15,
+    }))},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{x:{min:0,max:5.5,title:{display:true,text:'Urgency →',color:'#6e7681'},grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6e7681'}},
+              y:{min:0,max:5.5,title:{display:true,text:'Impact →',color:'#6e7681'},grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6e7681'}}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${decisions[c.datasetIndex].title.substring(0,35)}`}}}}
+  });
+
+  new Chart(document.getElementById('d72-cod').getContext('2d'),{
+    type:'bar',
+    data:{labels:decisions.map(d=>d.title.substring(0,22)+'…'),
+      datasets:[{label:'Cost of Delay ($K/week)',data:[180,140,120,95,55,40],
+        backgroundColor:decisions.map(d=>d.sev==='crit'?'rgba(239,68,68,.75)':d.sev==='high'?'rgba(245,158,11,.75)':'rgba(99,102,241,.65)'),borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6e7681',callback:v=>'$'+v+'K'}},y:{grid:{display:false},ticks:{color:'#8b949e',font:{size:9}}}},
+      plugins:{legend:{display:false}}}
+  });
+
+  let rem=72*3600;
+  const tick=()=>{rem=Math.max(0,rem-1);const h=Math.floor(rem/3600),m=Math.floor((rem%3600)/60);const el=document.getElementById('d72-counter');if(el)el.textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;if(rem>0)setTimeout(tick,1000);};
+  setTimeout(tick,1000);
+}
+
+// ── SCENARIO COMPARISON ───────────────────────────
+let scenDone=false;
+function renderScen(){
+  if(scenDone)return;scenDone=true;
+  const months=['Now','M+3','M+6','M+9','M+12','M+18','M+24'];
+  const actData= [2.90,3.15,3.45,3.68,3.85,4.15,4.38];
+  const waitData=[2.90,2.95,3.02,3.12,2.95,3.20,3.55];
+  const tgtData= [4.38,4.38,4.38,4.38,4.38,4.38,4.38];
+
+  new Chart(document.getElementById('scen-traj').getContext('2d'),{type:'line',data:{labels:months,datasets:[
+    {label:'Act Now',data:actData, borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.1)',tension:.35,pointRadius:4,borderWidth:2.5,fill:true},
+    {label:'Wait 6M',data:waitData,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.07)',tension:.35,pointRadius:4,borderWidth:2,fill:true},
+    {label:'Target', data:tgtData, borderColor:'rgba(99,102,241,.5)',borderDash:[5,4],pointRadius:0,borderWidth:1.5},
+  ]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:2,max:5,grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6e7681'}},x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#8b949e'}}},plugins:{legend:{labels:{boxWidth:9,color:'#8b949e',font:{size:9}}}}}});
+
+  new Chart(document.getElementById('scen-cost-chart').getContext('2d'),{type:'line',data:{labels:months,datasets:[
+    {label:'Act Now — Cumulative Cost',  data:[0,0.4,0.9,1.4,2.0,3.2,4.8],borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.1)',tension:.3,fill:true,borderWidth:2},
+    {label:'Wait 6M — Cumulative Cost',  data:[0,0.2,1.2,2.8,4.2,6.5,9.1],borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.08)',tension:.3,fill:true,borderWidth:2},
+  ]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,title:{display:true,text:'Cumulative Cost $M',color:'#6e7681'},grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6e7681',callback:v=>'$'+v+'M'}},x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#8b949e'}}},plugins:{legend:{labels:{boxWidth:9,color:'#8b949e',font:{size:9}}}}}});
+
+  const dims=[
+    {dim:'Avg Maturity at M+12',        act:'3.85',     wait:'2.95',    delta:'+0.90',       winner:'act'},
+    {dim:'Cumulative Cost Exposure',    act:'$2.0M',    wait:'$4.2M',   delta:'−$2.2M saved',winner:'act'},
+    {dim:'Critical Gaps Closed',        act:'5 of 5',   wait:'1 of 5',  delta:'4 additional',winner:'act'},
+    {dim:'PSP Score Projection',        act:'84%',      wait:'66%',     delta:'+18 pts',     winner:'act'},
+    {dim:'Schedule Risk (delay weeks)', act:'±2 wks',   wait:'±9 wks',  delta:'7 weeks less',winner:'act'},
+    {dim:'Change Orders Expected',      act:'~12',      wait:'~34',     delta:'22 fewer',    winner:'act'},
+    {dim:'Upfront Investment',          act:'$6.4M',    wait:'$3.2M*',  delta:'*deferred cost—higher total', winner:'wait'},
+    {dim:'Time to Target Maturity',     act:'18 months',wait:'30+ mths',delta:'12 months faster',            winner:'act'},
+  ];
+  document.getElementById('scen-table').innerHTML=`
+    <table style="width:100%;border-collapse:collapse;font-size:11px">
+      <thead><tr>
+        <th style="text-align:left;padding:8px 12px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);border-bottom:1px solid var(--bd)">Dimension</th>
+        <th style="padding:8px 12px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--grn);border-bottom:1px solid var(--bd);text-align:center">✓ Act Now</th>
+        <th style="padding:8px 12px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--red);border-bottom:1px solid var(--bd);text-align:center">Wait 6 Months</th>
+        <th style="padding:8px 12px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);border-bottom:1px solid var(--bd);text-align:center">Δ Difference</th>
+      </tr></thead>
+      <tbody>${dims.map(d=>`<tr style="border-bottom:1px solid rgba(255,255,255,.03)">
+        <td style="padding:8px 12px;color:var(--tx);font-weight:600">${d.dim}</td>
+        <td style="padding:8px 12px;text-align:center;color:${d.winner==='act'?'var(--grn)':'var(--tx2)'};font-weight:${d.winner==='act'?700:400}">${d.act}</td>
+        <td style="padding:8px 12px;text-align:center;color:${d.winner==='wait'?'var(--grn)':'var(--tx2)'};font-weight:${d.winner==='wait'?700:400}">${d.wait}</td>
+        <td style="padding:8px 12px;text-align:center;font-size:10px;color:${d.winner==='act'?'var(--grn)':'var(--amb)'}">${d.delta}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+}
+
+// ── 3-HORIZON ROADMAP ─────────────────────────────
+let h3Done=false;
+function renderH3(){
+  if(h3Done)return;h3Done=true;
+  const horizons=[
+    {num:'1',label:'Stabilise & Fix',range:'Now — Month 6',color:'#ef4444',bg:'rgba(239,68,68,.07)',bd:'rgba(239,68,68,.25)',
+     goal:'Eliminate all critical gaps. Establish performance baselines. Stop maturity decay and prevent cascade failures.',
+     inits:[{n:'Change Management Framework',cap:'CH',delta:'2.3→3.5',wk:8},{n:'Schedule EVM Implementation',cap:'SH',delta:'2.6→3.5',wk:6},{n:'Cost Control Dashboard',cap:'CO',delta:'2.8→3.5',wk:5},{n:'Innovation Pilot Programme',cap:'IN',delta:'1.9→2.8',wk:10},{n:'Commissioning Planning',cap:'CM',delta:'2.4→3.2',wk:8}],
+     kpis:['PSP ≥ 75%','All caps ≥ L2.5','0 critical gaps'],invest:'$2.8M'},
+    {num:'2',label:'Scale & Improve',range:'Month 6 — 18',color:'#f59e0b',bg:'rgba(245,158,11,.07)',bd:'rgba(245,158,11,.25)',
+     goal:'Scale successful pilots. Embed processes. Build organisational capability, resilience, and real-time intelligence.',
+     inits:[{n:'Performance Analytics Suite',cap:'PE',delta:'2.6→4.0',wk:14},{n:'Risk Management Platform',cap:'RC',delta:'2.4→3.8',wk:12},{n:'Sustainability ESG Framework',cap:'SU',delta:'2.2→3.5',wk:10},{n:'Info Management System',cap:'IM',delta:'2.5→3.8',wk:10},{n:'Quality Assurance Rollout',cap:'QM',delta:'2.7→3.8',wk:8}],
+     kpis:['Avg maturity ≥ 3.5','PSP ≥ 82%','12 of 17 caps at L3+'],invest:'$2.2M'},
+    {num:'3',label:'Lead & Transform',range:'Month 18 — 36',color:'#22c55e',bg:'rgba(34,197,94,.07)',bd:'rgba(34,197,94,.25)',
+     goal:'Achieve program target maturity. Export capability. Establish EPC Limited as the sector benchmark for project excellence.',
+     inits:[{n:'Digital Twin & AI Analytics',cap:'IN',delta:'2.8→4.5',wk:20},{n:'Procurement Excellence',cap:'PR',delta:'3.1→4.5',wk:12},{n:'Stakeholder Value Mgmt',cap:'ST',delta:'3.3→4.5',wk:8},{n:'HSE Excellence Programme',cap:'HS',delta:'3.5→5.0',wk:16},{n:'PM Certification Academy',cap:'PM',delta:'3.2→4.5',wk:14}],
+     kpis:['All caps ≥ L4.0','PSP ≥ 90%','Target maturity achieved'],invest:'$1.4M'},
+  ];
+
+  document.getElementById('h3-columns').innerHTML=horizons.map(h=>`
+    <div style="background:${h.bg};border:1px solid ${h.bd};border-radius:8px;overflow:hidden">
+      <div style="padding:12px 14px;border-bottom:1px solid ${h.bd};background:rgba(0,0,0,.2)">
+        <div style="font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:${h.color};margin-bottom:2px">HORIZON ${h.num}</div>
+        <div style="font-size:13px;font-weight:700;color:var(--tx)">${h.label}</div>
+        <div style="font-size:10px;color:var(--tx3);margin-top:2px">${h.range}</div>
+      </div>
+      <div style="padding:12px 14px">
+        <div style="font-size:10px;color:var(--tx2);margin-bottom:10px;line-height:1.5">${h.goal}</div>
+        <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);margin-bottom:6px">Initiatives</div>
+        ${h.inits.map(i=>`<div style="display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="font-size:8px;font-weight:700;padding:1px 5px;border-radius:3px;background:rgba(255,255,255,.06);color:${h.color}">${i.cap}</span><span style="flex:1;font-size:10px;color:var(--tx2)">${i.n}</span><span style="font-size:9px;color:var(--tx3)">${i.delta}</span></div>`).join('')}
+        <div style="margin-top:10px;padding:8px;background:rgba(0,0,0,.2);border-radius:5px">
+          <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:${h.color};margin-bottom:4px">KPI Gates</div>
+          ${h.kpis.map(k=>`<div style="font-size:9px;color:var(--tx2);margin-bottom:2px">✓ ${k}</div>`).join('')}
+        </div>
+        <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:9px;color:var(--tx3)">Investment</span>
+          <span style="font-size:13px;font-weight:700;color:${h.color}">${h.invest}</span>
+        </div>
+      </div>
+    </div>`).join('');
+
+  const selCaps=['CH','IN','SH','CO','SU','PE','RC','CM'];
+  const nowD=selCaps.map(id=>{const c=CAPS.find(x=>x.id===id);return c?c.cons:0;});
+  new Chart(document.getElementById('h3-traj').getContext('2d'),{type:'line',data:{labels:selCaps,datasets:[
+    {label:'Now',     data:nowD,                           borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.1)',tension:.2,fill:true,pointRadius:4},
+    {label:'H1 (M6)',data:[3.5,2.8,3.5,3.5,2.5,3.0,2.8,3.2],borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.07)',tension:.2,fill:true,pointRadius:4},
+    {label:'H2 (M18)',data:[4.0,3.5,4.0,4.0,3.5,4.0,3.8,3.8],borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.06)',tension:.2,fill:true,pointRadius:4},
+    {label:'H3 (M36)',data:[4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5],borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.06)',tension:.2,fill:true,pointRadius:4},
+  ]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:5,grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6e7681'}},x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#8b949e'}}},plugins:{legend:{labels:{boxWidth:9,color:'#8b949e',font:{size:9}}}}}});
+
+  new Chart(document.getElementById('h3-inv').getContext('2d'),{type:'doughnut',data:{
+    labels:['H1 Stabilise ($2.8M)','H2 Scale ($2.2M)','H3 Transform ($1.4M)'],
+    datasets:[{data:[2.8,2.2,1.4],backgroundColor:['rgba(239,68,68,.75)','rgba(245,158,11,.75)','rgba(34,197,94,.75)'],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:'#8b949e',font:{size:9},boxWidth:9,padding:8}},tooltip:{callbacks:{label:c=>` ${c.label}: ${((c.raw/6.4)*100).toFixed(0)}% of budget`}}}}});
+}
+
+// ── ROI BUBBLE MAP ────────────────────────────────
+let roiDone=false;
+function renderROI(){
+  if(roiDone)return;roiDone=true;
+  const inits=[
+    {n:'Change Management Programme', cap:'CH',invest:0.8, roi:4.2,effort:3,npv:3.4,pri:'crit',horizon:'H1'},
+    {n:'Schedule EVM System',         cap:'SH',invest:0.5, roi:3.8,effort:2,npv:1.9,pri:'high',horizon:'H1'},
+    {n:'Cost Control Dashboard',      cap:'CO',invest:0.6, roi:3.5,effort:2,npv:2.1,pri:'high',horizon:'H1'},
+    {n:'Performance Analytics',       cap:'PE',invest:0.9, roi:3.9,effort:4,npv:3.5,pri:'high',horizon:'H2'},
+    {n:'Innovation Digital Platform', cap:'IN',invest:1.2, roi:3.2,effort:5,npv:3.8,pri:'crit',horizon:'H1'},
+    {n:'Risk Management Platform',    cap:'RC',invest:0.7, roi:2.9,effort:3,npv:2.0,pri:'high',horizon:'H2'},
+    {n:'Sustainability Framework',    cap:'SU',invest:0.4, roi:2.4,effort:2,npv:1.0,pri:'med', horizon:'H2'},
+    {n:'Info Management System',      cap:'IM',invest:0.5, roi:2.7,effort:3,npv:1.4,pri:'med', horizon:'H2'},
+    {n:'Commissioning Excellence',    cap:'CM',invest:0.5, roi:2.6,effort:2,npv:1.3,pri:'med', horizon:'H1'},
+    {n:'Quality Assurance Rollout',   cap:'QM',invest:0.4, roi:2.2,effort:2,npv:0.9,pri:'med', horizon:'H2'},
+    {n:'HSE Excellence Programme',    cap:'HS',invest:0.5, roi:2.0,effort:2,npv:1.0,pri:'med', horizon:'H3'},
+    {n:'PM Certification Academy',    cap:'PM',invest:0.4, roi:1.8,effort:2,npv:0.7,pri:'low', horizon:'H3'},
+  ];
+  const pC={crit:'rgba(239,68,68,.75)',high:'rgba(245,158,11,.75)',med:'rgba(99,102,241,.65)',low:'rgba(34,197,94,.6)'};
+  const pB={crit:'#ef4444',high:'#f59e0b',med:'#6366f1',low:'#22c55e'};
+
+  new Chart(document.getElementById('roi-bubble').getContext('2d'),{
+    type:'bubble',
+    data:{datasets:inits.map(i=>({label:i.n,data:[{x:i.effort,y:i.roi,r:Math.round(i.invest*20+8)}],backgroundColor:pC[i.pri],borderColor:pB[i.pri],borderWidth:1.5}))},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{x:{min:0,max:6.5,title:{display:true,text:'Implementation Effort  (1=Low → 5=High)',color:'#6e7681'},grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6e7681'}},
+              y:{min:1,max:5,title:{display:true,text:'ROI Multiple',color:'#6e7681'},grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6e7681',callback:v=>v+'×'}}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const i=inits[c.datasetIndex];return[` ${i.n}`,` ROI: ${i.roi}×  ·  Invest: $${i.invest}M`,` NPV: $${i.npv}M  ·  Horizon: ${i.horizon}`]}}}}}
+  });
+
+  const sorted=[...inits].sort((a,b)=>b.roi-a.roi);
+  new Chart(document.getElementById('roi-bar').getContext('2d'),{
+    type:'bar',
+    data:{labels:sorted.map(i=>i.cap+': '+i.n.substring(0,20)),datasets:[
+      {label:'ROI Multiple',data:sorted.map(i=>i.roi),backgroundColor:sorted.map(i=>pC[i.pri]),borderRadius:3},
+      {label:'NPV $M',      data:sorted.map(i=>i.npv),backgroundColor:'rgba(88,166,255,.3)',borderRadius:3},
+    ]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,scales:{x:{min:0,grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6e7681'}},y:{grid:{display:false},ticks:{color:'#8b949e',font:{size:9}}}},plugins:{legend:{labels:{boxWidth:9,color:'#8b949e',font:{size:9}}}}}
+  });
+
+  document.getElementById('roi-table').innerHTML=`<table class="gt">
+    <thead><tr><th>Initiative</th><th>Cap</th><th>Horizon</th><th>Investment</th><th>ROI</th><th>NPV ($M)</th><th>Effort</th><th>Priority</th></tr></thead>
+    <tbody>${sorted.map(i=>`<tr>
+      <td style="font-weight:600;color:var(--tx)">${i.n}</td>
+      <td style="text-align:center"><span style="font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:rgba(88,166,255,.12);color:var(--acc)">${i.cap}</span></td>
+      <td style="text-align:center;color:var(--tx3);font-size:10px">${i.horizon}</td>
+      <td style="text-align:center;color:var(--con);font-weight:700">$${i.invest}M</td>
+      <td style="text-align:center;font-weight:700;color:${i.roi>=4?'var(--grn)':i.roi>=3?'var(--amb)':'var(--tx2)'}">${i.roi}×</td>
+      <td style="text-align:center;color:var(--own);font-weight:600">$${i.npv}M</td>
+      <td style="text-align:center"><div style="display:flex;gap:2px;justify-content:center">${[1,2,3,4,5].map(n=>`<div style="width:8px;height:8px;border-radius:2px;background:${n<=i.effort?'var(--acc)':'rgba(255,255,255,.08)'}"></div>`).join('')}</div></td>
+      <td><span class="ptag ${i.pri}">${i.pri.toUpperCase()}</span></td>
+    </tr>`).join('')}
+    </tbody></table>`;
+}
+
+
+// ── WEIGHT SYSTEM ─────────────────────────────────
+function toggleWP(){
+  const p=document.getElementById('wp-panel'),b=document.getElementById('wp-toggle');
+  p.classList.toggle('open');b.classList.toggle('on');
+}
+function onWt(key,val){
+  W[key]=val;
+  document.getElementById('wv-'+key).textContent=val+'%';
+  const tot=W.own+W.pmc+W.epc;
+  document.getElementById('wp-total').textContent=tot+'%';
+  document.getElementById('wp-total').style.color=tot===100?'var(--grn)':'var(--red)';
+  document.getElementById('wp-warn').style.display=tot!==100?'block':'none';
+}
+function applyWts(){
+  const tot=W.own+W.pmc+W.epc;
+  if(tot!==100){alert('Weights must total 100%. Currently: '+tot+'%.');return;}
+  CAPS.forEach(derive);
+  updKPIs();updLCT();invalidateCharts();
+  syncWtUI();saveState();
+  toggleWP();
+}
+function resetWts(){
+  W.own=35;W.pmc=40;W.epc=25;
+  ['own','pmc','epc'].forEach(k=>{
+    document.getElementById('ws-'+k).value=W[k];
+    document.getElementById('wv-'+k).textContent=W[k]+'%';
+  });
+  document.getElementById('wp-total').textContent='100%';
+  document.getElementById('wp-total').style.color='var(--grn)';
+  document.getElementById('wp-warn').style.display='none';
+}
+function syncWtUI(){
+  ['own','pmc','epc'].forEach(k=>{
+    const sl=document.getElementById('ws-'+k),vl=document.getElementById('wv-'+k);
+    if(sl)sl.value=W[k];if(vl)vl.textContent=W[k]+'%';
+  });
+  const s=document.getElementById('wp-sum');if(s)s.textContent=W.own+'/'+W.pmc+'/'+W.epc;
+  document.getElementById('wp-total').textContent=(W.own+W.pmc+W.epc)+'%';
+}
+function invalidateCharts(){
+  matDone=false;gapDone=false;riskDone=false;rmDone=false;intelDone=false;
+  d72Done=false;scenDone=false;h3Done=false;roiDone=false;
+  alignDone=false;actDone=false;portDone=false;scDone=false;
+  // Re-render the currently visible page immediately
+  const pg=activePg();
+  if(pg==='dash'){renderDash();}
+  else if(pg==='mat'){renderMat();}
+  else if(pg==='gap'){renderGap();}
+  else if(pg==='risk'){renderRisk();}
+  else if(pg==='hmap'){renderHmap();}
+  else if(pg==='sc'){renderSC();}
+}
+
+// ── DRILL-DOWN MODAL ──────────────────────────────
+const DESCRIPTORS={
+  PM:['No formal PM. Ad-hoc coordination.','Basic PM practices. Plans exist but inconsistently followed.','Defined PM framework. Plans maintained and tracked.','Integrated PM across all packages. Proactive issue management.','PM excellence. Predictive analytics, continuous improvement.'],
+  RC:['Risk not identified. Reactive only.','Risk register exists. Qualitative assessment only.','Quantified risk register. Mitigation plans assigned.','Integrated risk model. Contingency tied to quantified exposure.','Dynamic risk model. Monte Carlo. Real-time risk dashboard.'],
+  SC:['Scope undefined. No change control.','Scope documented. Changes managed informally.','Formal change control. Impact assessed before approval.','Change board governance. All changes tracked and costed.','Zero-tolerance scope creep. Automated change impact analysis.'],
+  ST:['No stakeholder plan. Reactive comms only.','Stakeholder list exists. Comms irregular.','Stakeholder plan with engagement matrix. Regular reporting.','Proactive stakeholder management. Structured feedback loops.','Stakeholder value management. Co-creation and shared KPIs.'],
+  IN:['No digital tools. Manual processes only.','Basic software. Spreadsheet-driven reporting.','Digital project management. BIM in use for some disciplines.','Integrated digital platform. Real-time data across all packages.','AI/ML analytics. Digital twin. Predictive performance modelling.'],
+  CO:['No cost tracking. Budget overruns undetected.','Manual cost tracking. Monthly reconciliation only.','Cost control system. EVM used. Variance reported weekly.','Real-time cost dashboard. Automated alerts on variance.','Predictive cost analytics. Trend analysis. AI-driven forecasting.'],
+  SH:['No schedule. Activities tracked informally.','Baseline schedule exists. Updated monthly.','CPM schedule. 3-week lookahead. Progress tracked weekly.','EVM integrated with schedule. What-if scenarios modelled.','Dynamic schedule with AI optimisation. Real-time progress capture.'],
+  PR:['Procurement ad-hoc. No pre-qualification.','Vendor list. Standard templates. Reactive procurement.','Procurement plan. Pre-qualified vendors. Formal bid process.','Strategic sourcing. Long-lead tracking. Performance KPIs.','Supply chain optimisation. Digital procurement portal.'],
+  QM:['No QA/QC plan. Inspection only.','QA plan exists. ITPs in place for key activities.','Full QMS. Independent audits. NCR tracking.','ISO-aligned QMS. Trend analysis. Lessons learned integrated.','Zero-defect culture. Predictive quality analytics.'],
+  CH:['No change management. Resistance unmanaged.','Awareness of change impacts. No formal process.','Change impact assessment. Stakeholder comms for major changes.','Structured CM plan. Training. Resistance actively managed.','Embedded change culture. Continuous improvement cycles.'],
+  IM:['Paper-based. No document control system.','Basic DMS. Naming convention not enforced.','Integrated DMS. Transmittal tracking. CDE in partial use.','Full CDE. Real-time document status. Automatic notifications.','AI-powered information management. NLP search and retrieval.'],
+  PE:['No KPIs. Performance not measured.','KPIs defined but reported manually with lag.','Performance dashboard. Weekly reporting. Trends visible.','Real-time KPI dashboard. Exception reporting. Benchmarking.','Predictive performance analytics. ML-driven early warning.'],
+  HS:['No HSE management system. Reactive.','HSE plan. Inductions. Incident reporting in place.','Proactive HSE. Leading indicators tracked. BBS programme.','HSE excellence. Zero LTI culture. Contractor HSE KPIs.','HSE leadership. Industry benchmark. Shared safety culture.'],
+  EN:['Engineering undocumented. No design management.','Drawings issued informally. No design review process.','Design management plan. Formal reviews. IFC controlled.','IFC register tracked. Value engineering. Clash detection active.','BIM Level 2+. Digital design coordination. AI-assisted review.'],
+  CN:['Construction planning absent. Activities uncoordinated.','Basic construction plan. Daily progress reported verbally.','Construction programme. Method statements. QC hold points.','Short-interval scheduling. Productivity monitoring. Daily KPIs.','Construction 4.0. IoT sensors. Real-time progress and safety.'],
+  CM:['No commissioning plan. Handover informal.','Commissioning list exists. Systems not categorised.','Commissioning programme. Witness tests planned. Punch listed.','Integrated commissioning. Pre-commissioning complete. OEM support.','Systematic commissioning. Digital punch list. Performance testing.'],
+  SU:['Sustainability not considered.','ESG reporting emerging. No formal targets.','Sustainability plan. Carbon tracking. Waste management.','ESG KPIs integrated into project reporting. Targets set.','Net-zero aligned. ESG analytics. Circular economy principles.'],
+};
+const LVL_NAMES=['Initial','Developing','Defined','Managed','Optimising'];
+const LVL_COLORS=['#ef4444','#f59e0b','#6366f1','#10b981','#22c55e'];
+
+function openModal(capId){
+  const cap=CAPS.find(c=>c.id===capId);if(!cap)return;
+  const desc=DESCRIPTORS[capId]||Array(5).fill('Descriptor not defined.');
+  const ev=EVIDENCE[capId]||{notes:'',ref:''};
+  document.getElementById('modal-ttl').textContent=cap.n+' — Maturity Levels & Evidence';
+  document.getElementById('modal-bd').innerHTML=`
+    <div class="lvl-grid">
+      ${[1,2,3,4,5].map((l,i)=>{
+        const cur=Math.round(cap.cons);
+        return `<div class="lc l${l}" style="border-width:${cur===l?2:1}px;opacity:${cur===l?1:0.7}">
+          <div class="lc-num" style="color:${LVL_COLORS[i]}">L${l} ${cur===l?'◀':''}</div>
+          <div class="lc-nm" style="color:${LVL_COLORS[i]}">${LVL_NAMES[i]}</div>
+          <div class="lc-desc">${desc[i]}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+      <div style="background:var(--own-a);border:1px solid var(--own-b);border-radius:6px;padding:10px;text-align:center">
+        <div style="font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;margin-bottom:4px">OWN</div>
+        <div style="font-size:22px;font-weight:800;color:var(--own)">${cap.own}</div>
+      </div>
+      <div style="background:var(--pmc-a);border:1px solid var(--pmc-b);border-radius:6px;padding:10px;text-align:center">
+        <div style="font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;margin-bottom:4px">PMC</div>
+        <div style="font-size:22px;font-weight:800;color:var(--pmc)">${cap.pmc}</div>
+      </div>
+      <div style="background:var(--epc-a);border:1px solid var(--epc-b);border-radius:6px;padding:10px;text-align:center">
+        <div style="font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;margin-bottom:4px">EPC</div>
+        <div style="font-size:22px;font-weight:800;color:var(--epc)">${cap.epc}</div>
+      </div>
+    </div>
+    <div style="margin-bottom:8px">
+      <div style="font-size:10px;font-weight:700;color:var(--tx);margin-bottom:6px">Evidence & Assessment Notes</div>
+      <textarea class="ev-inp" id="ev-notes-${cap.id}" placeholder="Document evidence for this score: observations, site visits, document reviews, interviews...">${ev.notes||''}</textarea>
+    </div>
+    <div style="margin-bottom:12px">
+      <div style="font-size:10px;font-weight:700;color:var(--tx);margin-bottom:6px">Reference Documents</div>
+      <input class="ev-inp" style="min-height:0;resize:none;height:34px;padding:7px 10px" id="ev-ref-${cap.id}" placeholder="e.g. QM-007 Rev3, Site Visit 2026-06-15" value="${ev.ref||''}">
+    </div>
+    <button class="btn btn-b" onclick="saveEvidence('${cap.id}')">💾 Save Evidence</button>
+  `;
+  document.getElementById('cap-modal').classList.add('open');
+}
+function closeModal(){document.getElementById('cap-modal').classList.remove('open');}
+function saveEvidence(id){
+  EVIDENCE[id]={
+    notes:document.getElementById('ev-notes-'+id)?.value||'',
+    ref:document.getElementById('ev-ref-'+id)?.value||'',
+  };
+  saveState();
+  closeModal();
+}
+
+// ── STAKEHOLDER ALIGNMENT ─────────────────────────
+let alignDone=false;
+function renderAlign(){
+  if(alignDone)return;alignDone=true;
+  // divergence = sum of pairwise absolute differences
+  CAPS.forEach(c=>{c.div=+(Math.abs(c.own-c.pmc)+Math.abs(c.pmc-c.epc)+Math.abs(c.own-c.epc)).toFixed(2);});
+  const maxDiv=Math.max(...CAPS.map(c=>c.div));
+  const avgDiv=+(CAPS.reduce((s,c)=>s+c.div,0)/CAPS.length).toFixed(2);
+  const critAlign=CAPS.filter(c=>c.div>=1.5).length;
+
+  // KPIs
+  document.getElementById('align-kpis').innerHTML=`
+    <div class="kc psp"><div class="kl">Avg Divergence</div><div class="kv" style="color:var(--con)">${avgDiv}</div><div class="ks">across 17 capabilities</div></div>
+    <div class="kc red"><div class="kl">High Divergence (≥1.5)</div><div class="kv" style="color:var(--red)">${critAlign}</div><div class="ks">alignment workshops needed</div></div>
+    <div class="kc own"><div class="kl">OWN vs PMC Avg Δ</div><div class="kv" style="color:var(--own)">${avg(CAPS.map(c=>({v:Math.abs(c.own-c.pmc)})).map(x=>({own:x.v})),'own') }</div><div class="ks">assessment divergence</div></div>
+  `.replace('avg(CAPS.map','0.32'); // placeholder inline, real calc below
+
+  const ownPmcAvg=+(CAPS.reduce((s,c)=>s+Math.abs(c.own-c.pmc),0)/CAPS.length).toFixed(2);
+  document.getElementById('align-kpis').innerHTML=`
+    <div class="kc psp"><div class="kl">Avg Divergence Score</div><div class="kv" style="color:var(--con)">${avgDiv}</div><div class="ks">pairwise sum across 17 caps</div></div>
+    <div class="kc red"><div class="kl">High Divergence (≥1.5)</div><div class="kv" style="color:var(--red)">${critAlign}</div><div class="ks">require alignment workshop</div></div>
+    <div class="kc own"><div class="kl">OWN vs PMC Avg</div><div class="kv" style="color:var(--own)">${ownPmcAvg}</div><div class="ks">systematic assessment gap</div></div>
+  `;
+
+  // Divergence bar chart
+  const sorted=[...CAPS].sort((a,b)=>b.div-a.div);
+  destroyChart('divChart');
+  new Chart(document.getElementById('divChart').getContext('2d'),{type:'bar',
+    data:{labels:sorted.map(c=>c.id),datasets:[
+      {label:'OWN−PMC',data:sorted.map(c=>+Math.abs(c.own-c.pmc).toFixed(2)),backgroundColor:'rgba(59,130,246,.7)',borderRadius:3},
+      {label:'PMC−EPC',data:sorted.map(c=>+Math.abs(c.pmc-c.epc).toFixed(2)),backgroundColor:'rgba(245,158,11,.7)',borderRadius:3},
+      {label:'OWN−EPC',data:sorted.map(c=>+Math.abs(c.own-c.epc).toFixed(2)),backgroundColor:'rgba(16,185,129,.7)',borderRadius:3},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#8b949e',font:{size:9}}},y:{stacked:true,min:0,grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6e7681'}}},plugins:{legend:{position:'top',labels:{boxWidth:9,color:'#8b949e',font:{size:9}}},tooltip:{callbacks:{title:t=>{const c=sorted[t[0].dataIndex];return c.n;},label:c=>` ${c.dataset.label}: ${c.raw}`}}}}
+  });
+
+  // Alignment radar (divergence per domain)
+  const divByDomain=DOMAINS.map(d=>{const caps=CAPS.filter(c=>c.dom===d);return +(caps.reduce((s,x)=>s+x.div,0)/caps.length).toFixed(2);});
+  destroyChart('divRad');
+  new Chart(document.getElementById('divRad').getContext('2d'),{type:'radar',
+    data:{labels:DOMAINS,datasets:[
+      {label:'Current Divergence',data:divByDomain,backgroundColor:'rgba(168,85,247,.2)',borderColor:'#a855f7',borderWidth:2,pointRadius:5},
+      {label:'Acceptable Threshold',data:[0.5,0.5,0.5],backgroundColor:'rgba(34,197,94,.1)',borderColor:'rgba(34,197,94,.5)',borderWidth:1.5,borderDash:[5,3],pointRadius:3},
+    ]},
+    options:radOpts(3)
+  });
+
+  // Table
+  document.getElementById('align-tbl').innerHTML=`<table class="gt"><thead><tr>
+    <th>Capability</th><th>Domain</th>
+    <th style="color:var(--own)">OWN</th><th style="color:var(--pmc)">PMC</th><th style="color:var(--epc)">EPC</th>
+    <th>OWN−PMC</th><th>PMC−EPC</th><th>OWN−EPC</th>
+    <th>Total Div</th><th>Risk</th>
+  </tr></thead><tbody>
+  ${sorted.map(c=>{
+    const op=+Math.abs(c.own-c.pmc).toFixed(2),pe=+Math.abs(c.pmc-c.epc).toFixed(2),oe=+Math.abs(c.own-c.epc).toFixed(2);
+    const risk=c.div>=1.5?'HIGH':c.div>=0.8?'MED':'LOW';
+    const rc=risk==='HIGH'?'crit':risk==='MED'?'high':'low';
+    return `<tr onclick="openModal('${c.id}')" style="cursor:pointer">
+      <td style="font-weight:600;color:var(--tx)">${c.n}</td>
+      <td style="color:var(--tx3);font-size:10px">${c.dom}</td>
+      <td style="text-align:center;color:var(--own);font-weight:600">${c.own}</td>
+      <td style="text-align:center;color:var(--pmc);font-weight:600">${c.pmc}</td>
+      <td style="text-align:center;color:var(--epc);font-weight:600">${c.epc}</td>
+      <td style="text-align:center;color:${op>=0.8?'var(--amb)':'var(--grn)'};font-weight:600">${op}</td>
+      <td style="text-align:center;color:${pe>=0.8?'var(--amb)':'var(--grn)'};font-weight:600">${pe}</td>
+      <td style="text-align:center;color:${oe>=0.8?'var(--amb)':'var(--grn)'};font-weight:600">${oe}</td>
+      <td style="text-align:center;font-weight:700;color:${rc==='crit'?'var(--red)':rc==='high'?'var(--amb)':'var(--grn)'}">${c.div}</td>
+      <td><span class="ptag ${rc}">${risk}</span></td>
+    </tr>`;
+  }).join('')}
+  </tbody></table>`;
+}
+
+// ── ACTION TRACKER ────────────────────────────────
+let alignDone2=false,actDone=false,atDonut=null,atBar=null;
+
+function initDefaultActions(){
+  if(ACTIONS_DATA.length)return;
+  ACTIONS_DATA=[
+    {id:'a1',title:'Approve Change Management Vendor',cap:'CH',pri:'crit',status:'open',owner:'Proj Director',due:'2026-07-03',notes:''},
+    {id:'a2',title:'Freeze Engineering Deliverables Register',cap:'SC',pri:'high',status:'open',owner:'Eng Lead',due:'2026-07-04',notes:''},
+    {id:'a3',title:'Authorise Contingency Release Protocol',cap:'CO',pri:'high',status:'wip',owner:'Commercial',due:'2026-07-05',notes:'Draft procedure circulated'},
+    {id:'a4',title:'Deploy Performance Analytics Environment',cap:'PE',pri:'high',status:'wip',owner:'IT Lead',due:'2026-07-10',notes:''},
+    {id:'a5',title:'Issue HSE Induction Programme',cap:'HS',pri:'med',status:'done',owner:'HSE Mgr',due:'2026-07-08',notes:'Completed 2026-06-28'},
+    {id:'a6',title:'Innovation Digital Platform Kickoff',cap:'IN',pri:'crit',status:'open',owner:'Proj Director',due:'2026-07-15',notes:''},
+    {id:'a7',title:'Confirm Construction Mobilisation Readiness',cap:'CN',pri:'high',status:'open',owner:'PMC Prog Mgr',due:'2026-07-06',notes:''},
+    {id:'a8',title:'ESG Sustainability Framework Development',cap:'SU',pri:'med',status:'open',owner:'Sustainability',due:'2026-08-01',notes:''},
+  ];
+}
+
+function renderAct(){
+  initDefaultActions();
+  if(actDone){renderATBody();updATCharts();return;}
+  actDone=true;
+  renderATBody();
+  renderATCharts();
+}
+
+function renderATBody(){
+  const open=ACTIONS_DATA.filter(a=>a.status==='open').length;
+  const wip=ACTIONS_DATA.filter(a=>a.status==='wip').length;
+  const done=ACTIONS_DATA.filter(a=>a.status==='done').length;
+  document.getElementById('at-kpis').innerHTML=`
+    <div class="kc red"><div class="kl">Open</div><div class="kv" style="color:var(--red)">${open}</div><div class="ks">not started</div></div>
+    <div class="kc pmc"><div class="kl">In Progress</div><div class="kv" style="color:var(--amb)">${wip}</div><div class="ks">active</div></div>
+    <div class="kc epc"><div class="kl">Closed</div><div class="kv" style="color:var(--grn)">${done}</div><div class="ks">complete</div></div>
+    <div class="kc tgt"><div class="kl">Completion</div><div class="kv" style="color:${done/(ACTIONS_DATA.length||1)>=0.5?'var(--grn)':'var(--amb)'}">${ACTIONS_DATA.length?Math.round(done/ACTIONS_DATA.length*100):0}%</div><div class="ks">of actions closed</div></div>
+  `;
+  document.getElementById('at-body').innerHTML=ACTIONS_DATA.map((a,i)=>`
+    <div class="at-row">
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--tx)">${a.title}</div>
+        <div style="font-size:9px;color:var(--tx3);margin-top:2px">Cap: ${a.cap} · ${a.notes||'No notes'}</div>
+      </div>
+      <select class="at-sel" onchange="setATPri(${i},this.value)">
+        <option value="crit" ${a.pri==='crit'?'selected':''}>CRITICAL</option>
+        <option value="high" ${a.pri==='high'?'selected':''}>HIGH</option>
+        <option value="med"  ${a.pri==='med' ?'selected':''}>MEDIUM</option>
+        <option value="low"  ${a.pri==='low' ?'selected':''}>LOW</option>
+      </select>
+      <select class="at-sel" onchange="setATStatus(${i},this.value)">
+        <option value="open" ${a.status==='open'?'selected':''}>🔴 Open</option>
+        <option value="wip"  ${a.status==='wip' ?'selected':''}>🟡 In Progress</option>
+        <option value="done" ${a.status==='done'?'selected':''}>🟢 Closed</option>
+      </select>
+      <div>
+        <input class="at-inp" placeholder="Owner" value="${a.owner||''}" onchange="setATOwner(${i},this.value)">
+        <input class="at-inp" type="date" value="${a.due||''}" style="margin-top:3px" onchange="setATDue(${i},this.value)">
+      </div>
+      <button class="at-del" onclick="delAction(${i})" title="Delete">✕</button>
+    </div>`).join('');
+  updATCharts();
+}
+
+function renderATCharts(){
+  const open=ACTIONS_DATA.filter(a=>a.status==='open').length;
+  const wip=ACTIONS_DATA.filter(a=>a.status==='wip').length;
+  const done=ACTIONS_DATA.filter(a=>a.status==='done').length;
+  atDonut=new Chart(document.getElementById('at-donut').getContext('2d'),{type:'doughnut',
+    data:{labels:['Open','In Progress','Closed'],datasets:[{data:[open,wip,done],backgroundColor:['rgba(239,68,68,.75)','rgba(245,158,11,.75)','rgba(34,197,94,.75)'],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{color:'#8b949e',font:{size:9},boxWidth:9,padding:8}}}}
+  });
+  const byPri=['crit','high','med','low'].map(p=>ACTIONS_DATA.filter(a=>a.pri===p).length);
+  atBar=new Chart(document.getElementById('at-bar').getContext('2d'),{type:'bar',
+    data:{labels:['Critical','High','Medium','Low'],datasets:[{data:byPri,backgroundColor:['rgba(239,68,68,.75)','rgba(245,158,11,.75)','rgba(99,102,241,.65)','rgba(34,197,94,.65)'],borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6e7681',stepSize:1}},x:{grid:{display:false},ticks:{color:'#8b949e'}}},plugins:{legend:{display:false}}}
+  });
+}
+
+function updATCharts(){
+  if(!atDonut||!atBar)return;
+  const open=ACTIONS_DATA.filter(a=>a.status==='open').length;
+  const wip=ACTIONS_DATA.filter(a=>a.status==='wip').length;
+  const done=ACTIONS_DATA.filter(a=>a.status==='done').length;
+  atDonut.data.datasets[0].data=[open,wip,done];atDonut.update();
+  const byPri=['crit','high','med','low'].map(p=>ACTIONS_DATA.filter(a=>a.pri===p).length);
+  atBar.data.datasets[0].data=byPri;atBar.update();
+}
+
+function setATStatus(i,v){ACTIONS_DATA[i].status=v;saveState();renderATBody();}
+function setATPri(i,v){ACTIONS_DATA[i].pri=v;saveState();renderATBody();}
+function setATOwner(i,v){ACTIONS_DATA[i].owner=v;saveState();}
+function setATDue(i,v){ACTIONS_DATA[i].due=v;saveState();}
+function clearDone(){ACTIONS_DATA=ACTIONS_DATA.filter(a=>a.status!=='done');saveState();renderATBody();}
+function delAction(i){if(!confirm('Delete this action?'))return;ACTIONS_DATA.splice(i,1);saveState();renderATBody();}
+function addAction(){
+  ACTIONS_DATA.unshift({id:'a'+Date.now(),title:'New Action',cap:'PM',pri:'med',status:'open',owner:'',due:'',notes:''});
+  renderATBody();saveState();
+}
+
+// ── PORTFOLIO VIEW ────────────────────────────────
+let portDone=false;
+function renderPort(){
+  if(portDone)return;portDone=true;
+  const K=getKPIs();
+  const projects=[
+    {n:'PRJ-001 Jubail Refinery Exp.',own:K.own,pmc:K.pmc,epc:K.epc,cons:K.cons,tgt:K.tgt,psp:K.psp,phase:'Phase 2',status:'amber',country:'KSA'},
+    {n:'PRJ-002 Ras Tanura Upgrade',  own:3.4,  pmc:3.6, epc:3.1, cons:3.38,tgt:4.2, psp:80,  phase:'Phase 3',status:'green',country:'KSA'},
+    {n:'PRJ-003 Riyadh Gas Network',  own:2.2,  pmc:2.5, epc:1.9, cons:2.23,tgt:4.0, psp:56,  phase:'Phase 1',status:'red',  country:'KSA'},
+    {n:'PRJ-004 Kuwait LNG Terminal', own:3.1,  pmc:3.3, epc:2.8, cons:3.08,tgt:4.5, psp:68,  phase:'Phase 2',status:'amber',country:'Kuwait'},
+  ];
+  projects.forEach(p=>{p.gap=+(p.tgt-p.cons).toFixed(2);});
+
+  // KPI strip
+  const avgPSP=Math.round(projects.reduce((s,p)=>s+p.psp,0)/projects.length);
+  const atRisk=projects.filter(p=>p.psp<65).length;
+  document.getElementById('port-kpis').innerHTML=`
+    <div class="kc own"><div class="kl">Projects in Portfolio</div><div class="kv" style="color:var(--own)">${projects.length}</div><div class="ks">active EPC programmes</div></div>
+    <div class="kc psp"><div class="kl">Portfolio Avg PSP</div><div class="kv" style="color:var(--con)">${avgPSP}%</div><div class="ks">blended success probability</div></div>
+    <div class="kc red"><div class="kl">At Risk</div><div class="kv" style="color:var(--red)">${atRisk}</div><div class="ks">PSP below 65%</div></div>
+    <div class="kc tgt"><div class="kl">Portfolio Avg Maturity</div><div class="kv" style="color:var(--tgt)">${+(projects.reduce((s,p)=>s+p.cons,0)/projects.length).toFixed(2)}</div><div class="ks">consensus score</div></div>
+  `;
+
+  // Bar comparison
+  destroyChart('portBar');
+  new Chart(document.getElementById('portBar').getContext('2d'),{type:'bar',
+    data:{labels:projects.map(p=>p.n.substring(0,22)),datasets:[
+      {label:'OWN',    data:projects.map(p=>p.own),   backgroundColor:'rgba(59,130,246,.75)',borderRadius:4},
+      {label:'PMC',    data:projects.map(p=>p.pmc),   backgroundColor:'rgba(245,158,11,.75)', borderRadius:4},
+      {label:'EPC',    data:projects.map(p=>p.epc),   backgroundColor:'rgba(16,185,129,.75)', borderRadius:4},
+      {label:'Target', data:projects.map(p=>p.tgt),   backgroundColor:'rgba(99,102,241,.3)',  borderRadius:4},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:5,grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6e7681'}},x:{grid:{display:false},ticks:{color:'#8b949e',font:{size:9},maxRotation:0}}},plugins:{legend:{position:'top',labels:{boxWidth:9,color:'#8b949e',font:{size:9}}}}}
+  });
+
+  // PSP + Maturity radar per project (domain-level)
+  destroyChart('portRad');
+  new Chart(document.getElementById('portRad').getContext('2d'),{type:'radar',
+    data:{labels:projects.map(p=>p.n.substring(0,14)),datasets:[
+      {label:'PSP %',          data:projects.map(p=>p.psp/20),backgroundColor:'rgba(168,85,247,.15)',borderColor:'#a855f7',borderWidth:2,pointRadius:4},
+      {label:'Consensus/5',    data:projects.map(p=>p.cons),  backgroundColor:'rgba(59,130,246,.12)', borderColor:'#3b82f6',borderWidth:1.5,pointRadius:3},
+      {label:'Target/5',       data:projects.map(p=>p.tgt),   backgroundColor:'transparent',           borderColor:'rgba(99,102,241,.4)',borderWidth:1.5,borderDash:[5,3],pointRadius:2},
+    ]},
+    options:radOpts(5)
+  });
+
+  // Summary table
+  const scl={green:'var(--grn)',amber:'var(--amb)',red:'var(--red)'};
+  document.getElementById('port-tbl').innerHTML=`<table class="gt"><thead><tr>
+    <th>Project</th><th>Country</th><th>Phase</th>
+    <th style="color:var(--own)">OWN</th><th style="color:var(--pmc)">PMC</th><th style="color:var(--epc)">EPC</th>
+    <th style="color:var(--con)">Consensus</th><th>Target</th><th>Gap</th><th>PSP</th><th>Status</th>
+  </tr></thead><tbody>
+  ${projects.map(p=>`<tr>
+    <td style="font-weight:600;color:var(--tx)">${p.n}</td>
+    <td style="color:var(--tx3);font-size:10px">${p.country}</td>
+    <td style="color:var(--tx3);font-size:10px">${p.phase}</td>
+    <td style="text-align:center;color:var(--own);font-weight:600">${p.own}</td>
+    <td style="text-align:center;color:var(--pmc);font-weight:600">${p.pmc}</td>
+    <td style="text-align:center;color:var(--epc);font-weight:600">${p.epc}</td>
+    <td style="text-align:center;color:var(--con);font-weight:700">${p.cons}</td>
+    <td style="text-align:center;color:var(--tgt);font-weight:600">${p.tgt}</td>
+    <td style="text-align:center;font-weight:700;color:${p.gap>1.5?'var(--red)':p.gap>0.8?'var(--amb)':'var(--grn)'}">Δ${p.gap}</td>
+    <td style="text-align:center;font-weight:700;color:${p.psp>=75?'var(--grn)':p.psp>=60?'var(--amb)':'var(--red)'}">${p.psp}%</td>
+    <td><span class="bdg ${p.status==='green'?'bdg-g':p.status==='red'?'bdg-r':'bdg-a'}" style="font-size:8px">${p.status.toUpperCase()}</span></td>
+  </tr>`).join('')}
+  </tbody></table>`;
+}
+
+// ── MAKE STATUS CARDS CLICKABLE ───────────────────
+function renderDashClickable(){
+  // patch status grid to be clickable after render
+  setTimeout(()=>{
+    document.querySelectorAll('#status-grid .sc2').forEach((el,i)=>{
+      el.style.cursor='pointer';
+      el.title='Click to view '+CAPS[i].n+' detail';
+      el.onclick=()=>openModal(CAPS[i].id);
+    });
+  },100);
+}
+
+// ── SAVE FLASH ────────────────────────────────────
+// (added in topbar HTML below)
+
+
+
+// ── HEAT MAP ──────────────────────────────────────
+function renderHmap(){
+  const scC=v=>v>=4.0?'var(--grn)':v>=3.0?'var(--amb)':'var(--red)';
+  const scB=v=>v>=4.0?'rgba(34,197,94,.12)':v>=3.0?'rgba(245,158,11,.12)':'rgba(239,68,68,.12)';
+  const gpC=g=>g>=2.0?'var(--red)':g>=1.0?'var(--amb)':'var(--grn)';
+  const gpB=g=>g>=2.0?'rgba(239,68,68,.12)':g>=1.0?'rgba(245,158,11,.12)':'rgba(34,197,94,.12)';
+  const dc={'Governance':'var(--own)','Controls':'var(--pmc)','Delivery':'var(--epc)'};
+  let rows='';
+  ['Governance','Controls','Delivery'].forEach(dom=>{
+    const caps=CAPS.filter(c=>c.dom===dom);
+    rows+=`<tr><td colspan="8" style="background:var(--bg-el);color:${dc[dom]};font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:6px 14px;border-top:1px solid var(--bd)">${dom}</td></tr>`;
+    caps.forEach(c=>{
+      const sc=scC(c.cons),sb=scB(c.cons),gc=gpC(c.gap),gb=gpB(c.gap);
+      rows+=`<tr style="border-bottom:1px solid rgba(255,255,255,.03)">
+        <td style="padding:7px 14px;font-size:11px;font-weight:600;color:var(--tx);min-width:160px">${c.n}</td>
+        <td style="text-align:center;padding:6px 8px"><span style="display:inline-block;width:34px;height:34px;border-radius:6px;line-height:34px;font-size:12px;font-weight:700;background:${scB(c.own)};color:${scC(c.own)}">${c.own}</span></td>
+        <td style="text-align:center;padding:6px 8px"><span style="display:inline-block;width:34px;height:34px;border-radius:6px;line-height:34px;font-size:12px;font-weight:700;background:${scB(c.pmc)};color:${scC(c.pmc)}">${c.pmc}</span></td>
+        <td style="text-align:center;padding:6px 8px"><span style="display:inline-block;width:34px;height:34px;border-radius:6px;line-height:34px;font-size:12px;font-weight:700;background:${scB(c.epc)};color:${scC(c.epc)}">${c.epc}</span></td>
+        <td style="text-align:center;padding:6px 8px"><span style="display:inline-block;width:34px;height:34px;border-radius:6px;line-height:34px;font-size:13px;font-weight:800;background:${sb};color:${sc}">${c.cons}</span></td>
+        <td style="text-align:center;padding:6px 8px;color:var(--tx3);font-size:11px">${c.tgt}</td>
+        <td style="text-align:center;padding:6px 8px"><span style="display:inline-block;min-width:38px;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:700;background:${gb};color:${gc}">Δ${c.gap}</span></td>
+        <td style="text-align:center;padding:6px 8px"><span class="ptag ${c.pri}" style="font-size:9px">${c.pri==='crit'?'CRITICAL':c.pri.toUpperCase()}</span></td>
+      </tr>`;
+    });
+  });
+  document.getElementById('hmap-content').innerHTML=`
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="border-bottom:1px solid var(--bd)">
+        <th style="text-align:left;padding:8px 14px;font-size:10px;color:#6e7681;font-weight:600">Capability</th>
+        <th style="text-align:center;padding:8px;font-size:10px;color:var(--own);font-weight:600">OWN</th>
+        <th style="text-align:center;padding:8px;font-size:10px;color:var(--pmc);font-weight:600">PMC</th>
+        <th style="text-align:center;padding:8px;font-size:10px;color:var(--epc);font-weight:600">EPC</th>
+        <th style="text-align:center;padding:8px;font-size:10px;color:var(--con);font-weight:600">Consensus</th>
+        <th style="text-align:center;padding:8px;font-size:10px;color:#6e7681;font-weight:600">Target</th>
+        <th style="text-align:center;padding:8px;font-size:10px;color:#6e7681;font-weight:600">Gap</th>
+        <th style="text-align:center;padding:8px;font-size:10px;color:#6e7681;font-weight:600">Priority</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// ── STARTUP BOOT SEQUENCE ─────────────────────────
+// Runs after Chart.js is loaded and all functions are defined
+window.addEventListener('DOMContentLoaded', function(){
+  loadState();
+  CAPS.forEach(derive);
+  syncWtUI();
+  updKPIs();
+  // Render initial dashboard
+  renderDash();
+  renderDashClickable();
+  // Initialize perspective (shows modal if no saved preference)
+ 
